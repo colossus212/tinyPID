@@ -9,10 +9,10 @@
 
    The microcontroller uses the equation
 
-   y = Kp * e + Ki * Ts * e_sum + Kd/Ts * (e - e_last)
+   u = Kp * e + Ki * Ts * e_sum + Kd/Ts * (e - e_last)
 
    with y being the output value
-   the actual output is done via PWM and ranges from 0 to 255
+   the actual output 'y' is done via PWM and ranges from 0 to 255
 
    Kp, Ki and Kd being the control parameters set by the user
    Ts being the sampling time, hardcoded in the program, 16ms
@@ -54,16 +54,16 @@ float Ki = 0;
 float Kd = 0;
 uint8_t w = 0;
 
-float y = 0;
+float u = 0;
+uint8_t y = 0;
 uint8_t x = 0;
-float e = 0;
-float e_sum = 0;
+int16_t e = 0;
+int16_t e_sum = 0;
 
 void init_wdt();
 void init_adc();
 void init_pwm();
 
-void output();
 uint8_t read_pv();
 
 void contr()
@@ -72,9 +72,21 @@ void contr()
 
     x = read_pv();
     e = w - x;
-    e_sum += e;
 
-    y  = Kp * e;
-    y += Ki * Ts * e_sum;
-    y += Kd * fs * (e - e_last);
+    e_sum += e;
+    if (e >  3000) e =  3000; // magic!
+    if (e < -3000) e = -3000; // magic!
+
+    u  = Kp * e;
+    u += Ki * Ts * e_sum;
+    u += Kd * fs * (e - e_last);
+    
+    if (u > 255) 
+        y = 255;
+    else if (u < 0) 
+        y = 0;
+    else
+        y = (uint8_t) u;
+
+    PWM = y;
 }
