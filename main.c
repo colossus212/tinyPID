@@ -34,7 +34,7 @@
    Kp is the proportional factor
    Ki is the integrating factor
    Kd is the differential factor
-   Conversion from time-based parameters:
+   
    Ki = Kp/Tn
    Kd = Kp/Td
 
