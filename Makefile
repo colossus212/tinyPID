@@ -7,6 +7,8 @@ optlevel=3
 avrdude_programmer=avrispmkII
 avrdude_prog_port=usb
 
+# libraries to link in (e.g. -lmylib)
+LIBS=-Wl,-u,vfscanf -lscanf_flt -Wl,-u,vfprintf -lprintf_min
 
 #########		AVR Project Makefile	   #########
 ######										  ######
@@ -98,9 +100,6 @@ PRJSRC=$(sourcefiles)
 
 # additional includes (e.g. -I/path/to/mydir)
 #INC=-I/path/to/include
-
-# libraries to link in (e.g. -lmylib)
-LIBS=
 
 # Optimization level, 
 # use s (size opt), 1, 2, 3 or 0 (off)
