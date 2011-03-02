@@ -14,7 +14,7 @@
 
 enum modes {AUTO, MANUAL, STOP};
 
-void init();
+void init_pid();
 
 uint8_t read_pv();
 
