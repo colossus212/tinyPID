@@ -3,15 +3,16 @@
 #include <avr/eeprom.h>
 #include "pid.h"
 
-float eeKp EEMEM = 0;
-float eeKi EEMEM = 0;
-float eeKd EEMEM = 0;
+uint8_t eeKp EEMEM = 0;
+uint8_t eeKi EEMEM = 0;
+uint8_t eeKd EEMEM = 0;
+uint8_t eeAttn EEMEM = 1;
 uint8_t eeInitValue EEMEM = 0;
-uint8_t eeInitMode EEMEM = MANUAL;
+uint8_t eeInitMode EEMEM = STOP;
 
-float Kp, Ki, Kd, y;
+uint8_t Kp, KpAttn, Ki, Kd;
+uint8_t y;
 uint8_t w, x;
-int16_t e, e_sum;
 uint8_t opmode;
 
 
@@ -19,7 +20,7 @@ ISR(WDT_vect)
 {
 	// keep WDT from resetting, interrupt instead
 	WDTCR |= (1 << WDIE);
-    if (opmode == AUTO)
+    if (opmode != STOP)
         contr();
 }
 
@@ -28,15 +29,14 @@ void init()
 {
     uint8_t initv = eeprom_read_byte(&eeInitValue);
 
-    Kp = eeprom_read_float(&eeKp);
-    Ki = eeprom_read_float(&eeKi);
-    Kd = eeprom_read_float(&eeKd);
+    Kp = eeprom_read_byte(&eeKp);
+    Ki = eeprom_read_byte(&eeKi);
+    Kd = eeprom_read_byte(&eeKd);
+    KpAttn = eeprom_read_byte(&eeAttn);
 
     w = 0;
     x = 0;
     y = 0;
-    e = 0;
-    e_sum = 0;
     
     cli();
 
@@ -68,8 +68,8 @@ void init()
     else if (opmode == MANUAL)
         PWM = initv;
     else { // if sth. went wrong with the mode
-        opmode = MANUAL;
-        PWM = initv;
+        opmode = STOP;
+        PWM = 0;
     }
 
     // enable interrupts
@@ -78,23 +78,37 @@ void init()
 
 void contr()
 {
-    int16_t e_last = e;
+    static int16_t e = 0;
+    static int16_t e_sum = 0;
+    static int16_t e_last = 0;
+    float u = 0;
 
     x = read_pv();
-    e = w - x;
 
-    e_sum += e;
-    if (e_sum >  3000) e_sum =  3000; // magic!
-    if (e_sum < -3000) e_sum = -3000; // magic!
+    if (opmode == AUTO)
+    {
+        e_last = e;
+        e = w - x;
+        e_sum += e;
+        if (e_sum >  3000) e_sum =  3000; // magic!
+        if (e_sum < -3000) e_sum = -3000; // magic!
 
-    y  = Kp * e;
-    y += Ki * Ts * e_sum;
-    y += Kd * fs * (e - e_last);
+        u  = Kp * 1/KpAttn * e;
+        u += Ki * Ts * e_sum;
+        u += Kd * fs * (e - e_last);
 
-    if (y > 255) y = 255;
-    if (y < 0) y = 0;
+        if (u > 255) y = 255;
+        else if (u < 0) y = 0;
+        else
+            y = (uint8_t) u;
+    }
+    else 
+    {
+        e = e_last = e_sum = 0;
+    }
 
-    PWM = (uint8_t) y;
+
+    PWM = y;
 }
 
 uint8_t read_pv()

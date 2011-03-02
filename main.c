@@ -9,12 +9,15 @@
 
    The microcontroller uses the equation
 
-   y = Kp * e + Ki * Ts * e_sum + Kd/Ts * (e - e_last)
+   y = Kp * 1/KpAttn e + Ki * Ts * e_sum + Kd/Ts * (e - e_last)
 
    with y being the output value
    the actual output is done via PWM and ranges from 0 to 255
 
    Kp, Ki and Kd being the control parameters set by the user
+   KpAttn is an attenuation factor to allow overall amplification
+   lower than 1
+   
    Ts being the sampling time, hardcoded in the program, 16ms
 
    e being the error, e = w - x

@@ -12,7 +12,7 @@
 #define fs 1/Ts
 #define ADCHAN 1
 
-enum modes {AUTO, MANUAL};
+enum modes {AUTO, MANUAL, STOP};
 
 void init();
 
