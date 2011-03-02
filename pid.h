@@ -1,3 +1,5 @@
+#include <avr/io.h>
+
 // PWM output
 #define IO_PWM PB4
 #define IO_PIN PINB
@@ -8,7 +10,7 @@
 // PID Things
 #define Ts 0.016
 #define fs 1/Ts
-#define ADCHAN ADC1
+#define ADCHAN 1
 
 enum modes {AUTO, MANUAL};
 

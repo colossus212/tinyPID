@@ -1,6 +1,7 @@
 #include <avr/io.h>
 #include <avr/interrupt.h>
 #include <avr/eeprom.h>
+#include "pid.h"
 
 float eeKp EEMEM = 0;
 float eeKi EEMEM = 0;
@@ -98,7 +99,8 @@ void contr()
 
 uint8_t read_pv()
 {
-    uint8_t a = 0;
+    uint8_t a = 0, i = 0;
+
     ADMUX = ADCHAN | (1 << ADLAR);
 	
 	// read ADC, take 4 samples
