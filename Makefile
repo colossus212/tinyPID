@@ -1,12 +1,14 @@
 mcu_string=attiny25
 avrdude_mcu_string=t25
 freq_cpu=8000000UL
-sourcefiles=main.c softuart.c pid.c
+sourcefiles=main.c softuart.c pid.c cli.c
 projectname=project
 optlevel=3
 avrdude_programmer=avrispmkII
 avrdude_prog_port=usb
 
+# libraries to link in (e.g. -lmylib)
+LIBS=
 
 #########		AVR Project Makefile	   #########
 ######										  ######
@@ -98,9 +100,6 @@ PRJSRC=$(sourcefiles)
 
 # additional includes (e.g. -I/path/to/mydir)
 #INC=-I/path/to/include
-
-# libraries to link in (e.g. -lmylib)
-LIBS=
 
 # Optimization level, 
 # use s (size opt), 1, 2, 3 or 0 (off)

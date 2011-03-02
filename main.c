@@ -45,8 +45,10 @@
 
 #include <avr/io.h>
 #include "pid.h"
+#include "cli.h"
 
 void main()
 {
+    init_cli();
     init_pid();
 }
