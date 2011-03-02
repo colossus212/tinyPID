@@ -8,7 +8,7 @@ avrdude_programmer=avrispmkII
 avrdude_prog_port=usb
 
 # libraries to link in (e.g. -lmylib)
-LIBS=-Wl,-u,vfscanf -lscanf_flt -Wl,-u,vfprintf -lprintf_min
+LIBS=
 
 #########		AVR Project Makefile	   #########
 ######										  ######
