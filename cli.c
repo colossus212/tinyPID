@@ -5,7 +5,7 @@
 #include "softuart.h"
 #include "pid.h"
 
-extern uint8_t opmode;
+extern uint8_t opmode, y, x, w, Kp, KpAttn, Kd, Ki;
 
 // Wrappers around UART I/O
 static int uart_put(char c, FILE *stream);
@@ -35,85 +35,50 @@ void init_cli()
 }
 
 
-void command(char c)
-{
-    char *buf[10];
-
-    switch (c)
-    {
-      case 's':
-        // 'set' command or 'stop'
-        c = getchar();
-        switch (c)
-        {
-            case 't':
-                // 'stop' command
-                if (scanf("op\n"))
-                    opmode = STOP;
-            break;
-
-            case 'v':
-            break;
-
-            case 'p':
-            break;
-
-            case 'a':
-            break;
-
-            case 'i':
-            break;
-
-            case 'y':
-            break;
-
-            default:
-              puts("?");
-        }
-      break;
-
-      case 'v':
-        // 'view' command
-        c = getchar();
-        switch (c)
-        {
-            case 'c':
-            break;
-
-            case 'x':
-            break;
-
-            case 'y':
-            break;
-
-            default:
-              puts("?");
-        }
-      break;
-
-      case 'a':
-        // 'auto' command
-        if (scanf("uto\n"))
-            opmode = AUTO;
-      break;
-
-      case 'm':
-        // 'man' command
-        if (scanf("an\n"))
-            opmode = MANUAL;
-      break;
-
-      default:
-        puts("?");
-    }
-}
-
 void command_loop()
 {
-    char c;
-    if(softuart_kbhit())
+    char cmd[5];
+    int argv, a, b, c;
+
+    if (softuart_kbhit())
     {
-        c = getchar();
-        command(c);
+        argv = scanf("%s %i %i %i", cmd, &a, &b, &c);
+
+        if (strcmp_P(cmd, PSTR("man") ) == 0)
+            opmode = MANUAL;
+        else if (strcmp_P(cmd, PSTR("auto")) == 0)
+            opmode = AUTO;
+        else if (strcmp_P(cmd, PSTR("stop")) == 0)
+            opmode = STOP;
+        else if (strcmp_P(cmd, PSTR("sv")) == 0)
+        {
+        }
+        else if (strcmp_P(cmd, PSTR("sp")) == 0)
+        {
+        }
+        else if (strcmp_P(cmd, PSTR("sa")) == 0)
+        {
+        }
+        else if (strcmp_P(cmd, PSTR("si")) == 0)
+        {
+        }
+        else if (strcmp_P(cmd, PSTR("sy")) == 0)
+        {
+        }
+        else if (strcmp_P(cmd, PSTR("vc")) == 0)
+        {
+        }
+        else if (strcmp_P(cmd, PSTR("vx")) == 0)
+        {
+        }
+        else if (strcmp_P(cmd, PSTR("vy")) == 0)
+        {
+        }
+        else if (strcmp_P(cmd, PSTR("vw")) == 0)
+        {
+        }
+        else
+            puts_P(PSTR("?"));
+
     }
 }

@@ -1,9 +1,9 @@
-mcu_string=attiny25
-avrdude_mcu_string=t25
+mcu_string=attiny85
+avrdude_mcu_string=t85
 freq_cpu=8000000UL
 sourcefiles=main.c softuart.c pid.c cli.c
 projectname=project
-optlevel=3
+optlevel=s
 avrdude_programmer=avrispmkII
 avrdude_prog_port=usb
 
