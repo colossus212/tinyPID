@@ -44,6 +44,7 @@
 */
 
 #include <avr/io.h>
+#include <stdio.h>
 #include "pid.h"
 #include "cli.h"
 
@@ -51,4 +52,11 @@ void main()
 {
     init_cli();
     init_pid();
+
+    printf("tinyPID on-line\n");
+
+    while (1)
+    {
+        command_loop();
+    }
 }

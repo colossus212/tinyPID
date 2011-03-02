@@ -3,6 +3,9 @@
 #include <stdio.h>
 #include "cli.h"
 #include "softuart.h"
+#include "pid.h"
+
+extern uint8_t opmode;
 
 // Wrappers around UART I/O
 static int uart_put(char c, FILE *stream);
@@ -34,16 +37,83 @@ void init_cli()
 
 void command(char c)
 {
-    switch(c)
+    char *buf[10];
+
+    switch (c)
     {
       case 's':
-        // 'set' command
+        // 'set' command or 'stop'
+        c = getchar();
+        switch (c)
+        {
+            case 't':
+                // 'stop' command
+                if (scanf("op\n"))
+                    opmode = STOP;
+            break;
+
+            case 'v':
+            break;
+
+            case 'p':
+            break;
+
+            case 'a':
+            break;
+
+            case 'i':
+            break;
+
+            case 'y':
+            break;
+
+            default:
+              puts("?");
+        }
       break;
+
       case 'v':
         // 'view' command
+        c = getchar();
+        switch (c)
+        {
+            case 'c':
+            break;
+
+            case 'x':
+            break;
+
+            case 'y':
+            break;
+
+            default:
+              puts("?");
+        }
       break;
+
       case 'a':
         // 'auto' command
+        if (scanf("uto\n"))
+            opmode = AUTO;
       break;
+
+      case 'm':
+        // 'man' command
+        if (scanf("an\n"))
+            opmode = MANUAL;
+      break;
+
+      default:
+        puts("?");
+    }
+}
+
+void command_loop()
+{
+    char c;
+    if(softuart_kbhit())
+    {
+        c = getchar();
+        command(c);
     }
 }
