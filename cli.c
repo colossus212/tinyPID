@@ -7,3 +7,12 @@ static FILE mystdin  = FDEV_SETUP_STREAM(NULL, softuart_getchar, _FDEV_SETUP_REA
 
 stdout = mystdout;
 stdin  = mystdin;
+
+void command(char c)
+{
+    switch(c)
+    {
+      ;
+    }
+}
+
