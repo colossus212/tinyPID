@@ -19,9 +19,4 @@ uint8_t read_pv();
 
 void contr();
 
-typedef struct {
-    uint8_t manual_op :1;
-    uint8_t running   :1;
-} pid_flags_t;
-
-
+void save_parameters();

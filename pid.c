@@ -1,15 +1,15 @@
 #include <avr/io.h>
 #include <math.h>
 
-pid_flags_t pid_flags;
-
 float Kp, Ki, Kd, y;
 uint8_t w, x;
 int16_t e, e_sum;
+bit pid_manual;
 
 void init()
 {
-    pid_flags.manual_op = 1;
+    // read parameters etc. from eeprom here
+    pid_manual = 1;
 
     init_wdt();
     init_pwm();
