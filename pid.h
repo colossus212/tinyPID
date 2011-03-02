@@ -10,6 +10,8 @@
 #define fs 1/Ts
 #define ADCHAN ADC1
 
+enum modes {AUTO, MANUAL};
+
 void init();
 
 uint8_t read_pv();

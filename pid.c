@@ -1,34 +1,37 @@
 #include <avr/io.h>
 #include <avr/interrupt.h>
+#include <avr/eeprom.h>
+
+float eeKp EEMEM = 0;
+float eeKi EEMEM = 0;
+float eeKd EEMEM = 0;
+uint8_t eeInitial EEMEM = 0;
+uint8_t eeOpMode EEMEM = 0;
 
 float Kp, Ki, Kd, y;
 uint8_t w, x;
 int16_t e, e_sum;
-bit pid_manual;
+uint8_t opmode;
+
 
 ISR(WDT_vect)
 {
 	// keep WDT from resetting, interrupt instead
 	WDTCR |= (1 << WDIE);
-    if (pid_manual == 0)
+    if (opmode == AUTO)
         contr();
 }
 
 
 void init()
 {
-    // read parameters etc. from eeprom here
-    pid_manual = 1;
+    Kp = eeprom_read_float(&eeKp);
+    Ki = eeprom_read_float(&eeKi);
+    Kd = eeprom_read_float(&eeKd);
+    w  = eeprom_read_byte(&eeInitial);
 
-    init_wdt();
-    init_pwm();
-    init_adc();
+    opmode = eeprom_read_byte(&eeOpMode); 
 
-    Kp = 0;
-    Ki = 0;
-    Kd = 0;
-
-    w = 0;
     x = 0;
     y = 0;
     e = 0;
