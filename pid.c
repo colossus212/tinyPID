@@ -5,8 +5,8 @@
 float eeKp EEMEM = 0;
 float eeKi EEMEM = 0;
 float eeKd EEMEM = 0;
-uint8_t eeInitial EEMEM = 0;
-uint8_t eeOpMode EEMEM = 0;
+uint8_t eeInitValue EEMEM = 0;
+uint8_t eeInitMode EEMEM = MANUAL;
 
 float Kp, Ki, Kd, y;
 uint8_t w, x;
@@ -25,13 +25,13 @@ ISR(WDT_vect)
 
 void init()
 {
+    uint8_t initv = eeprom_read_byte(&eeInitValue);
+
     Kp = eeprom_read_float(&eeKp);
     Ki = eeprom_read_float(&eeKi);
     Kd = eeprom_read_float(&eeKd);
-    w  = eeprom_read_byte(&eeInitial);
 
-    opmode = eeprom_read_byte(&eeOpMode); 
-
+    w = 0;
     x = 0;
     y = 0;
     e = 0;
@@ -60,6 +60,18 @@ void init()
     // set ADC channel, left-justify result
     ADMUX = ADCHAN | (1 << ADLAR);
 
+    // Operation mode setup and initial values
+    opmode = eeprom_read_byte(&eeInitMode); 
+    if (opmode == AUTO)
+        w = initv;
+    else if (opmode == MANUAL)
+        PWM = initv;
+    else { // if sth. went wrong with the mode
+        opmode = MANUAL;
+        PWM = initv;
+    }
+
+    // enable interrupts
     sei();
 }
 
