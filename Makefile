@@ -1,7 +1,7 @@
 mcu_string=attiny25
 avrdude_mcu_string=t25
 freq_cpu=8000000UL
-sourcefiles=main.c softuart.c cli.c
+sourcefiles=main.c softuart.c cli.c mystdio.c
 projectname=project
 optlevel=3
 avrdude_programmer=avrispmkII

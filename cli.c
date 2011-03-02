@@ -1,12 +1,5 @@
-#include <stdio.h>
 #include <avr/pgmspace.h>
-#include "softuart.h"
-
-static FILE mystdout = FDEV_SETUP_STREAM(softuart_putchar, NULL, _FDEV_SETUP_WRITE);
-static FILE mystdin  = FDEV_SETUP_STREAM(NULL, softuart_getchar, _FDEV_SETUP_READ);
-
-stdout = &mystdout;
-stdin  = &mystdin;
+#include "mystdio.h"
 
 void command(char c)
 {
