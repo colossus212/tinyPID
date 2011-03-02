@@ -1,12 +1,16 @@
 #include <avr/io.h>
 #include <math.h>
 
+pid_flags_t pid_flags;
+
 float Kp, Ki, Kd, y;
 uint8_t w, x;
 int16_t e, e_sum;
 
 void init()
 {
+    pid_flags.manual_op = 1;
+
     init_wdt();
     init_pwm();
     init_adc();
@@ -23,6 +27,7 @@ void init()
 
     PWM = 0;
 }
+
 void contr()
 {
     int16_t e_last = e;
@@ -31,13 +36,13 @@ void contr()
     e = w - x;
 
     e_sum += e;
-    if (e >  3000) e =  3000; // magic!
-    if (e < -3000) e = -3000; // magic!
+    if (e_sum >  3000) e_sum =  3000; // magic!
+    if (e_sum < -3000) e_sum = -3000; // magic!
 
     y  = Kp * e;
     y += Ki * Ts * e_sum;
     y += Kd * fs * (e - e_last);
-    
+
     if (y > 255) y = 255;
     if (y < 0) y = 0;
 
