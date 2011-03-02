@@ -44,9 +44,8 @@
 #include <math.h>
 #include "softuart.h"
 #include "cli.h"
-#include "mystdio.h"
 
 void main()
 {
-    mystdio_init();
+    init_cli();
 }
