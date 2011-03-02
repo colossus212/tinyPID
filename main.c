@@ -43,81 +43,9 @@
 #include <avr/io.h>
 #include <math.h>
 #include "softuart.h"
+#include "cli.h"
 
-// PWM output
-#define IO_PWM PB4
-#define IO_PIN PINB
-#define IO_PORT PORTB
-#define IO_DDR DDRB
-
-// PWM register
-#define PWM OCR1B
-
-
-#define Ts 0.016
-#define fs 1/Ts
-#define ADCHAN ADC1
-
-void init_wdt();
-void init_adc();
-void init_pwm();
-
-uint8_t read_pv();
-void contr();
-
-float Kp = 0;
-float Ki = 0;
-float Kd = 0;
-uint8_t w = 0;
-
-float u = 0;
-uint8_t y = 0;
-uint8_t x = 0;
-int16_t e = 0;
-int16_t e_sum = 0;
-
-void init_wdt();
-void init_adc();
-void init_pwm();
-
-uint8_t read_pv();
-
-void contr()
+void main()
 {
-    float e_last = e;
-
-    x = read_pv();
-    e = w - x;
-
-    e_sum += e;
-    if (e >  3000) e =  3000; // magic!
-    if (e < -3000) e = -3000; // magic!
-
-    u  = Kp * e;
-    u += Ki * Ts * e_sum;
-    u += Kd * fs * (e - e_last);
-    
-    if (u > 255) 
-        y = 255;
-    else if (u < 0) 
-        y = 0;
-    else
-        y = (uint8_t) u;
-
-    PWM = y;
-}
-
-
-void init_pwm()
-{
-	/* I/O initialization */
-	IO_PORT = 0xFF;
-	IO_DDR |=_BV(IO_PWM);
-
-	// PWM for Timer 1, does FAST PWM, prescaler = 1
-	TCCR1 =  _BV(CS10); //| _BV(CS11);
-	GTCCR  = _BV(COM1B0) | _BV(PWM1B);
-	OCR1C = 0xFF; // TOP
-
-    PWM = 0;
+    softuart_init();
 }

@@ -1,4 +1,4 @@
-mcu_string=tiny25
+mcu_string=attiny25
 avrdude_mcu_string=t25
 freq_cpu=8000000UL
 sourcefiles=main.c softuart.c cli.c
