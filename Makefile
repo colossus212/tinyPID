@@ -1,7 +1,7 @@
 mcu_string=tiny25
 avrdude_mcu_string=t25
 freq_cpu=8000000UL
-sourcefiles=main.c softuart.c
+sourcefiles=main.c softuart.c cli.c
 projectname=project
 optlevel=3
 avrdude_programmer=avrispmkII
