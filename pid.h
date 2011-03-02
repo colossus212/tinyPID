@@ -10,9 +10,6 @@
 #define fs 1/Ts
 #define ADCHAN ADC1
 
-void init_wdt();
-void init_pwm();
-void init_adc();
 void init();
 
 uint8_t read_pv();
