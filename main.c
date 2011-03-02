@@ -48,5 +48,5 @@
 
 void main()
 {
-    init();
+    init_pid();
 }

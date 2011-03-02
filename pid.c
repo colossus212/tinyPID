@@ -25,7 +25,7 @@ ISR(WDT_vect)
 }
 
 
-void init()
+void init_pid()
 {
     uint8_t initv = eeprom_read_byte(&eeInitValue);
 
