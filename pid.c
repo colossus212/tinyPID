@@ -36,23 +36,25 @@ void init()
     y = 0;
     e = 0;
     e_sum = 0;
-
+    
     cli();
 
-	// I/O initialization
-	IO_PORT = 0xFF;
-	IO_DDR |=_BV(IO_PWM);
+    // I/O setup
+    IO_PORT = 0xFF;
+    IO_DDR |=_BV(IO_PWM);
 
-	// PWM for Timer 1, does FAST PWM, prescaler = 1
-	TCCR1 =  _BV(CS10); //| _BV(CS11);
-	GTCCR  = _BV(COM1B0) | _BV(PWM1B);
-	OCR1C = 0xFF; // TOP
-
+    // PWM setup
+    // Timer1, does FAST PWM, prescaler = 1
+    TCCR1 =  _BV(CS10); //| _BV(CS11);
+    GTCCR  = _BV(COM1B0) | _BV(PWM1B);
+    OCR1C = 0xFF; // TOP
     PWM = 0;
 
+    // WDT setup
     // enable watchdog timer, use interrupt instead of reset, every 0.016 seconds
-	WDTCR = (1 << WDE) | (1 << WDIE);
+    WDTCR = (1 << WDE) | (1 << WDIE);
     
+    // ADC setup
     // enable ADC, VCC ref., set prescaler to 8
     ADCSRA = (1 << ADEN) | (1 << ADPS1) | (1 << ADPS0);
     // set ADC channel, left-justify result
