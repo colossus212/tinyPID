@@ -1,12 +1,17 @@
 #include <avr/pgmspace.h>
 #include <avr/interrupt.h>
+#include <stdio.h>
 #include "cli.h"
 #include "softuart.h"
+
+// Wrappers around UART I/O
+static int uart_put(char c, FILE *stream);
+static int uart_get(FILE *stream);
 
 // Setup streams
 static FILE uart_stream = FDEV_SETUP_STREAM(uart_put, uart_get, _FDEV_SETUP_RW);
 
-// Wrappers around UART I/O
+
 static int uart_put(char c, FILE *stream)
 {
     softuart_putchar(c);
