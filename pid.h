@@ -22,4 +22,3 @@ uint8_t read_pv();
 void contr();
 
 void pid_save_parameters();
-void pid_set_initial(char mode, uint8_t val);

@@ -129,13 +129,6 @@ void pid_save_parameters()
     eeprom_write_byte(&eeKp, Kp);
     eeprom_write_byte(&eeKi, Ki);
     eeprom_write_byte(&eeKd, Kd);
-}
-
-void pid_set_initial(char mode, uint8_t val)
-{
-    eeprom_write_byte(&eeInitValue, val);
-    if (mode == 'a')
-        eeprom_write_byte(&eeInitMode, AUTO);
-    if (mode == 'm')
-        eeprom_write_byte(&eeInitMode, MANUAL);
+    eeprom_write_byte(&eeInitValue, InitValue);
+    eeprom_write_byte(&eeMode, InitMode);
 }
