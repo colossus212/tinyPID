@@ -24,11 +24,12 @@
  *                             initial set-value to X
  * simX          73 69 6D X   set initial mode to manual,
  *                             initial output to X
- * gc\n          67 63 0A     get configuration, returns 7 bytes, meaning:
- *                             10Kp, Ki, Kd, mode ('a', 'm', 'o'), initial mode, init val, '\n'
- * gv\n          67 76 0A     get set-value, returns that byte plus '\n'
- * gx\n          67 76 0A     get process value, returns that byte plus '\n'
- * gy\n          67 76 0A     get output value, returns that byte plus '\n'
+ * gp            67 70        get parameters, returns 10Kp, Ki, Kd, in that order
+ * gm            67 6D        get operation mode, returns 'a', 'm' or 'o'
+ * gi            67 69        get initial mode and value, in that order
+ * gv            67 76        get set-value, returns that byte
+ * gx            67 76        get process value, returns that byte
+ * gy            67 76        get output value, returns that byte
  *
  */
 
@@ -98,33 +99,32 @@ void command_loop()
 
             case 'g':
                 c = softuart_getchar();
-                if (softuart_getchar() != '\n') 
-                    break;
-
                 switch (c) {
                     case 'v':
                         softuart_putchar(w);
-                        softuart_putchar('\n');
                     break;
 
                     case 'x':
                         softuart_putchar(x);
-                        softuart_putchar('\n');
                     break;
 
                     case 'y':
                         softuart_putchar(y);
-                        softuart_putchar('\n');
                     break;
 
-                    case 'c':
+                    case 'p':
                         softuart_putchar(Kp);
                         softuart_putchar(Ki);
                         softuart_putchar(Kd);
+                    break;
+
+                    case 'm':
                         softuart_putchar(opmode);
+                    break;
+
+                    case 'i':
                         softuart_putchar(InitMode);
                         softuart_putchar(InitValue);
-                        softuart_putchar('\n');
                     break;
                 }
             break;
