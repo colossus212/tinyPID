@@ -90,8 +90,8 @@ void contr()
         e_last = e;
         e = w - x;
         e_sum += e;
-        if (e_sum >  3000) e_sum =  3000; // magic!
-        if (e_sum < -3000) e_sum = -3000; // magic!
+        if (e_sum >  400) e_sum =  400; // magic!
+        if (e_sum < -400) e_sum = -400; // magic!
 
         u  = Kp * 1./KpAttn * e;
         u += Ki * Ts * e_sum;
