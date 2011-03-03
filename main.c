@@ -44,14 +44,16 @@
 */
 
 #include <avr/io.h>
+#include "cli.h"
 #include "pid.h"
 
 void main()
 {
     init_pid();
-
+    init_cli();
 
     while (1)
     {
+        command_loop();
     }
 }

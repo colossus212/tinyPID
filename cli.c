@@ -5,7 +5,7 @@
 #include "softuart.h"
 #include "pid.h"
 
-extern uint8_t opmode, y, x, w, Kp, KpAttn, Kd, Ki;
+extern uint8_t opmode, y, x, w, Kp, Kd, Ki;
 
 void init_cli()
 {
@@ -16,7 +16,7 @@ void init_cli()
 
 void command_loop()
 {
-    char c, d;
+    char c;
 
     if (softuart_kbhit())
     {
