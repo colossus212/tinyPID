@@ -130,5 +130,5 @@ void pid_save_parameters()
     eeprom_write_byte(&eeKi, Ki);
     eeprom_write_byte(&eeKd, Kd);
     eeprom_write_byte(&eeInitValue, InitValue);
-    eeprom_write_byte(&eeMode, InitMode);
+    eeprom_write_byte(&eeInitMode, InitMode);
 }
