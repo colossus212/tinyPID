@@ -12,7 +12,9 @@
 #define fs 1/Ts
 #define ADCHAN 1
 
-enum modes {AUTO, MANUAL, STOP};
+#define KpAttn 0.1
+
+enum modes {AUTO='a', MANUAL='m', STOP='o'};
 
 void init_pid();
 

@@ -40,7 +40,8 @@
 #include "softuart.h"
 #include "pid.h"
 
-extern uint8_t opmode, y, x, w, Kp, Kd, Ki;
+extern uint8_t opmode, y, x, w, Kp, Kd, Ki, InitMode, InitValue;
+
 
 void init_cli()
 {
@@ -84,9 +85,9 @@ void command_loop()
                     break;
 
                     case 'i':
-                        pid_set_initial(
-                           softuart_getchar(),
-                           softuart_getchar());
+                        InitMode  = softuart_getchar();
+                        InitValue = softuart_getchar();
+                        pid_save_parameters();
                     break;
 
                     case 'y':
@@ -96,7 +97,41 @@ void command_loop()
                 }
             break;
 
-            case 'v':
+            case 'g':
+                c = softuart_getchar();
+                if (softuart_getchar() != '\n') 
+                    break;
+
+                switch (c) {
+                    case 'v':
+                        softuart_putchar(w);
+                        softuart_putchar('\n');
+                    break;
+
+                    case 'x':
+                        softuart_putchar(x);
+                        softuart_putchar('\n');
+                    break;
+
+                    case 'y':
+                        softuart_putchar(y);
+                        softuart_putchar('\n');
+                    break;
+
+                    case 'c':
+                        softuart_putchar(Kp);
+                        softuart_putchar(Ki);
+                        softuart_putchar(Kd);
+                        softuart_putchar(opmode);
+                        softuart_putchar(InitMode);
+                        softuart_putchar(InitValue);
+                        softuart_putchar('\n');
+                    break;
+                }
+            break;
+
+            default:
+                softuart_putchar('?');
             break;
         }
     }

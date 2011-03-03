@@ -13,8 +13,7 @@ uint8_t Kp, Ki, Kd;
 uint8_t y;
 uint8_t w, x;
 uint8_t opmode;
-
-#define KpAttn 0.1
+uint8_t InitMode, InitValue;
 
 ISR(WDT_vect)
 {
@@ -27,11 +26,12 @@ ISR(WDT_vect)
 
 void init_pid()
 {
-    uint8_t initv = eeprom_read_byte(&eeInitValue);
-
     Kp = eeprom_read_byte(&eeKp);
     Ki = eeprom_read_byte(&eeKi);
     Kd = eeprom_read_byte(&eeKd);
+
+    InitMode  = eeprom_read_byte(&eeInitMode); 
+    InitValue = eeprom_read_byte(&eeInitValue);
 
     w = 0;
     x = 0;
@@ -61,11 +61,11 @@ void init_pid()
     ADMUX = ADCHAN | (1 << ADLAR);
 
     // Operation mode setup and initial values
-    opmode = eeprom_read_byte(&eeInitMode); 
+    opmode = InitMode;
     if (opmode == AUTO)
-        w = initv;
+        w = InitValue;
     else if (opmode == MANUAL)
-        PWM = initv;
+        PWM = InitValue;
     else { // if sth. went wrong with the mode
         opmode = STOP;
         PWM = 0;
