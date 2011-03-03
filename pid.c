@@ -6,15 +6,15 @@
 uint8_t eeKp EEMEM = 0;
 uint8_t eeKi EEMEM = 0;
 uint8_t eeKd EEMEM = 0;
-uint8_t eeAttn EEMEM = 1;
 uint8_t eeInitValue EEMEM = 0;
 uint8_t eeInitMode EEMEM = STOP;
 
-uint8_t Kp, KpAttn, Ki, Kd;
+uint8_t Kp, Ki, Kd;
 uint8_t y;
 uint8_t w, x;
 uint8_t opmode;
 
+#define KpAttn 0.1
 
 ISR(WDT_vect)
 {
@@ -32,7 +32,6 @@ void init_pid()
     Kp = eeprom_read_byte(&eeKp);
     Ki = eeprom_read_byte(&eeKi);
     Kd = eeprom_read_byte(&eeKd);
-    KpAttn = eeprom_read_byte(&eeAttn);
 
     w = 0;
     x = 0;
@@ -78,7 +77,6 @@ void init_pid()
 
 void contr()
 {
-    static int16_t e = 0;
     static int16_t e_sum = 0;
     static int16_t e_last = 0;
     float u = 0;
@@ -87,15 +85,15 @@ void contr()
 
     if (opmode == AUTO)
     {
-        e_last = e;
-        e = w - x;
-        e_sum += e;
+        e_sum += w - x;
         if (e_sum >  400) e_sum =  400; // magic!
         if (e_sum < -400) e_sum = -400; // magic!
 
-        u  = Kp * 1./KpAttn * e;
+        u  = Kp * KpAttn * (w - x);
         u += Ki * Ts * e_sum;
-        u += Kd * fs * (e - e_last);
+        u += Kd * fs * (w - x - e_last);
+
+        e_last = w - x;
 
         if (u > 255) y = 255;
         else if (u < 0) y = 0;
@@ -104,9 +102,8 @@ void contr()
     }
     else 
     {
-        e = e_last = e_sum = 0;
+         e_last = e_sum = 0;
     }
-
 
     PWM = y;
 }
