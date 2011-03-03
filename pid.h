@@ -17,7 +17,7 @@ enum modes {AUTO, MANUAL, STOP};
 void init_pid();
 
 uint8_t read_pv();
-
 void contr();
 
-void save_parameters();
+void pid_save_parameters();
+void pid_set_initial(char mode, uint8_t val);

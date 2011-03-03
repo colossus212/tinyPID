@@ -101,9 +101,7 @@ void contr()
             y = (uint8_t) u;
     }
     else 
-    {
          e_last = e_sum = 0;
-    }
 
     PWM = y;
 }
@@ -124,4 +122,20 @@ uint8_t read_pv()
 	}
 
     return a/4;
+}
+
+void pid_save_parameters()
+{
+    eeprom_write_byte(&eeKp, Kp);
+    eeprom_write_byte(&eeKi, Ki);
+    eeprom_write_byte(&eeKd, Kd);
+}
+
+void pid_set_initial(char mode, uint8_t val)
+{
+    eeprom_write_byte(&eeInitValue, val);
+    if (mode == 'a')
+        eeprom_write_byte(&eeInitMode, AUTO);
+    if (mode == 'm')
+        eeprom_write_byte(&eeInitMode, MANUAL);
 }
