@@ -3,7 +3,7 @@ avrdude_mcu_string=t85
 freq_cpu=8000000UL
 sourcefiles=main.c softuart.c pid.c #cli.c
 projectname=project
-optlevel=s
+optlevel=3
 avrdude_programmer=avrispmkII
 avrdude_prog_port=usb
 
