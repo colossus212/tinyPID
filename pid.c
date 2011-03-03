@@ -93,7 +93,7 @@ void contr()
         if (e_sum >  3000) e_sum =  3000; // magic!
         if (e_sum < -3000) e_sum = -3000; // magic!
 
-        u  = Kp * 1/KpAttn * e;
+        u  = Kp * 1./KpAttn * e;
         u += Ki * Ts * e_sum;
         u += Kd * fs * (e - e_last);
 

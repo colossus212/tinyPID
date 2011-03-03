@@ -8,7 +8,7 @@ avrdude_programmer=avrispmkII
 avrdude_prog_port=usb
 
 # libraries to link in (e.g. -lmylib)
-LIBS=
+LIBS=-lm
 
 #########		AVR Project Makefile	   #########
 ######										  ######
@@ -167,8 +167,7 @@ ASMFLAGS =-I. $(INC) -mmcu=$(MCU)		 \
 
 
 # linker
-LDFLAGS=-Wl,-Map,$(TRG).map -mmcu=$(MCU) \
-	-lm $(LIBS)
+LDFLAGS=-Wl,-Map,$(TRG).map -mmcu=$(MCU) $(LIBS)
 
 ##### executables ####
 CC=avr-gcc
