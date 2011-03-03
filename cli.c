@@ -54,8 +54,7 @@ void command_loop()
 {
     char c;
 
-    if (softuart_kbhit())
-    {
+    if (softuart_kbhit()) {
         c = softuart_getchar();
         switch (c) {
             case 'a':

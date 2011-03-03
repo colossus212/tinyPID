@@ -19,7 +19,7 @@ ISR(WDT_vect)
 {
 	// keep WDT from resetting, interrupt instead
 	WDTCR |= (1 << WDIE);
-    if (opmode != STOP)
+    if (opmode == AUTO || opmode == MANUAL)
         contr();
 }
 
@@ -83,8 +83,7 @@ void contr()
 
     x = read_pv();
 
-    if (opmode == AUTO)
-    {
+    if (opmode == AUTO) {
         e_sum += w - x;
         if (e_sum >  400) e_sum =  400; // magic!
         if (e_sum < -400) e_sum = -400; // magic!
