@@ -48,7 +48,12 @@ class tinyPID (object):
 
     def get_parameters(self):
         self.__write("gp")
-        return self.__readb(3)
+        p = self.__readb(3)
+        if p is not None:
+            p[0] = p[0] / 10.
+            return p
+        else:
+            return None
 
     def get_initial(self):
         self.__write("gi")
@@ -91,7 +96,7 @@ class tinyPID (object):
         if name in ("Kp", "Ki", "Kd"):
             p, i, d = self.get_parameters()
             if name == "Kp":
-                return 10*p
+                return p
             elif name == "Ki":
                 return i
             else:
