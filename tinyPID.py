@@ -9,6 +9,19 @@
 
 import serial
 
+def Ki_to_Tn(kp, ki):
+    return float(kp)/ki
+
+def Kd_to_Tv(kp, kd):
+    return float(kd)/kp
+
+def Tn_to_Ki(kp, tn):
+    return kp/tn
+
+def Tv_to_Kd(kp, tv):
+    return kp * tv
+
+
 class tinyPID (object):
 
     def __init__(self, *args, **kwargs):
@@ -36,9 +49,10 @@ class tinyPID (object):
 
     def __write(self, *args):
         for s in args:
-            if not type(s) is str:
+            if not type(s) in (str, int):
                 raise TypeError
-            elif type(s) is int:
+
+            if type(s) is int:
                 s = chr(s)
             self.com.write(s)
 
@@ -72,7 +86,7 @@ class tinyPID (object):
         return self.__readb()
 
     def set_parameters(self, Kp, Ki, Kd):
-        self.__write("sp", 10*Kp, Ki, Kd)
+        self.__write("sp", int(10*Kp), Ki, Kd)
 
     def set_value(self, w):
         self.__write("sv", w)
@@ -93,14 +107,18 @@ class tinyPID (object):
         self.__write("o")
 
     def __getattr__(self, name):
-        if name in ("Kp", "Ki", "Kd"):
+        if name in ("Kp", "Ki", "Kd", "Tn", "Tv"):
             p, i, d = self.get_parameters()
             if name == "Kp":
                 return p
             elif name == "Ki":
                 return i
-            else:
+            elif name == "Kd":
                 return d
+            elif name == "Tn":
+                return Ki_to_Tn(p, i)
+            elif name == "Tv":
+                return Kd_to_Tv(p, d)
 
         elif name in ("InitMode", "InitValue"):
             m, v = self.get_initial()
@@ -122,14 +140,20 @@ class tinyPID (object):
             object.__getattr__(self, name)
 
     def __setattr__(self, name, value):
-        if name in ("Kp", "Ki", "Kd"):
+        if name in ("Kp", "Ki", "Kd", "Tn", "Tv"):
             p, i, d = self.get_parameters()
             if name == "Kp":
                 self.set_parameters(Kp=value, Ki=i, Kd=d)
             elif name == "Ki":
                 self.set_parameters(Kp=p, Ki=value, Kd=d)
-            else: 
+            elif name == "Kd":
                 self.set_parameters(Kp=p, Ki=i, Kd=value)
+            elif name == "Tn":
+                i = Tn_to_Ki(p, value)
+                self.set_parameters(Kp=p, Ki=i, Kd=d)
+            elif name == "Tv":
+                d = Tv_to_Kd(p, value)
+                self.set_parameters(Kp=p, Ki=i, Kd=d)
 
         elif name == "w":
             self.set_value(value)
