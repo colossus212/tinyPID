@@ -127,10 +127,6 @@ void command_loop()
                     break;
                 }
             break;
-
-            default:
-                softuart_putchar('?');
-            break;
         }
     }
 }
