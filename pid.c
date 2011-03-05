@@ -19,8 +19,7 @@ ISR(WDT_vect)
 {
 	// keep WDT from resetting, interrupt instead
 	WDTCR |= (1 << WDIE);
-    if (opmode == AUTO || opmode == MANUAL)
-        contr();
+    contr();
 }
 
 
@@ -99,9 +98,11 @@ void contr()
         else
             y = (uint8_t) u;
     }
-    else 
-         e_last = e_sum = 0;
-
+    else {
+        e_last = e_sum = 0;
+        if (opmode == STOP)
+            y = 0;
+    }
     PWM = y;
 }
 
