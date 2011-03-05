@@ -10,13 +10,22 @@
 import serial
 
 def Ki_to_Tn(kp, ki):
-    return float(kp)/ki
+    if ki > 0:
+        return float(kp)/ki
+    else:
+        return 0
 
 def Kd_to_Tv(kp, kd):
-    return float(kd)/kp
+    if kp > 0:
+        return float(kd)/kp
+    else:
+        return 0
 
 def Tn_to_Ki(kp, tn):
-    return kp/tn
+    if tn > 0:
+        return kp/tn
+    else:
+        raise ValueError
 
 def Tv_to_Kd(kp, tv):
     return kp * tv
@@ -57,10 +66,12 @@ class tinyPID (object):
             self.com.write(s)
 
     def get_mode(self):
+        self.com.flush()
         self.__write("gm")
         return self.__readc()
 
     def get_parameters(self):
+        self.com.flush()
         self.__write("gp")
         p = self.__readb(3)
         if p is not None:
@@ -70,40 +81,51 @@ class tinyPID (object):
             return None
 
     def get_initial(self):
+        self.com.flush()
         self.__write("gi")
         return self.__readc(), self.__readb()
 
     def get_pv(self):
+        self.com.flush()
         self.__write("gx")
         return self.__readb()
 
     def get_value(self):
+        self.com.flush()
         self.__write("gv")
         return self.__readb()
 
     def get_output(self):
+        self.com.flush()
         self.__write("gy")
         return self.__readb()
 
     def set_parameters(self, Kp, Ki, Kd):
+        self.com.flush()
         self.__write("sp", int(10*Kp), Ki, Kd)
 
     def set_value(self, w):
+        self.com.flush()
         self.__write("sv", w)
 
     def set_initial(self, mode, value=0):
+        self.com.flush()
         self.__write("si", mode, value)
 
     def set_output(self, value):
+        self.com.flush()
         self.__write("sy", value)
 
     def auto(self):
+        self.com.flush()
         self.__write("a")
 
     def manual(self):
+        self.com.flush()
         self.__write("m")
 
     def stop(self):
+        self.com.flush()
         self.__write("o")
 
     def __getattr__(self, name):
