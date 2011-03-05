@@ -36,7 +36,6 @@
 
 #include <avr/pgmspace.h>
 #include <avr/interrupt.h>
-#include <stdio.h>
 #include "cli.h"
 #include "softuart.h"
 #include "pid.h"
