@@ -3,39 +3,23 @@
 #include <avr/eeprom.h>
 #include "pid.h"
 
-uint8_t eeKp EEMEM = 0;
-uint8_t eeKi EEMEM = 0;
-uint8_t eeKd EEMEM = 0;
+uint16_t eeP_factor EEMEM = 0;
+uint16_t eeI_factor EEMEM = 0;
+uint16_t eeD_factor EEMEM = 0;
 uint8_t eeInitValue EEMEM = 0;
 uint8_t eeInitMode EEMEM = STOP;
 
-uint8_t Kp, Ki, Kd;
-uint8_t y;
-uint8_t w, x;
-uint8_t opmode;
-uint8_t InitMode, InitValue;
+struct PID_FLAGS *pid_flags;
 
 ISR(WDT_vect)
 {
 	// keep WDT from resetting, interrupt instead
 	WDTCR |= (1 << WDIE);
-    contr();
+    pid_flags->timer = 1;
 }
 
-
-void init_pid()
+void init_periph()
 {
-    Kp = eeprom_read_byte(&eeKp);
-    Ki = eeprom_read_byte(&eeKi);
-    Kd = eeprom_read_byte(&eeKd);
-
-    InitMode  = eeprom_read_byte(&eeInitMode); 
-    InitValue = eeprom_read_byte(&eeInitValue);
-
-    w = 0;
-    x = 0;
-    y = 0;
-    
     cli();
 
     // I/O setup
@@ -59,54 +43,117 @@ void init_pid()
     // set ADC channel, left-justify result
     ADMUX = ADCHAN | (1 << ADLAR);
 
-    // Operation mode setup and initial values
-    opmode = InitMode;
-    if (opmode == AUTO)
-        w = InitValue;
-    else if (opmode == MANUAL)
-        PWM = InitValue;
-    else { // if sth. went wrong with the mode
-        opmode = STOP;
-        PWM = 0;
-    }
-
     // enable interrupts
     sei();
 }
 
-void contr()
+struct PID_DATA* init_pid()
 {
-    static int16_t e_sum = 0;
-    static int16_t e_last = 0;
-    float u = 0;
+    struct PID_DATA initdata = {0,0,0,0,0,0,0,0,0,0,0};
+    struct PID_DATA *piddata = &initdata;
 
-    x = read_pv();
+    cli();
 
-    if (opmode == AUTO) {
-        e_sum += w - x;
-        if (e_sum >  400) e_sum =  400; // magic!
-        if (e_sum < -400) e_sum = -400; // magic!
+    pid_flags->timer = 0;
 
-        u  = Kp * KpAttn * (w - x);
-        u += Ki * Ts * e_sum;
-        u += Kd * fs * (w - x - e_last);
+    piddata->opmode = STOP;
+    pid_set_output(0);
+    pid_load_parameters(piddata);
 
-        e_last = w - x;
-
-        if (u > 255) y = 255;
-        else if (u < 0) y = 0;
-        else
-            y = (uint8_t) u;
+    if (piddata->InitMode == MANUAL) {
+        piddata->opmode = MANUAL;
+        piddata->manual_output = piddata->InitValue;
+    }
+    else if (piddata->InitMode == AUTO) {
+        piddata->opmode = AUTO;
+        piddata->setpoint = piddata->InitValue;
+    }
+    else if (piddata->InitMode == STOP) {
+        piddata->opmode = STOP;
     }
     else {
-        e_last = e_sum = 0;
-        if (opmode == STOP)
-            y = 0;
+        piddata->InitMode = STOP;
+        piddata->opmode   = STOP;
     }
-    PWM = y;
+
+    sei();
+
+    return piddata;
 }
 
-uint8_t read_pv()
+void pid_run(struct PID_DATA *piddata)
+{
+    int32_t y = 0;
+
+    piddata->last_pv = piddata->processvalue;
+    piddata->processvalue = pid_read_pv();
+
+    if (piddata->opmode == AUTO) {
+        y = pid_contr(piddata);
+        pid_set_output(y);
+    }
+    else if (piddata->opmode == STOP) {
+        pid_set_output(0);
+    }
+    else if (piddata->opmode == MANUAL) {
+        pid_set_output(piddata->manual_output);
+    }
+}
+
+void pid_reset(struct PID_DATA *piddata) 
+{
+    piddata->esum = 0;
+    piddata->last_pv = 0;
+    piddata->processvalue = 0;
+}
+
+int32_t pid_contr(struct PID_DATA *piddata)
+{
+    int16_t e, pterm, iterm, dterm;
+    int32_t u;
+
+    e = piddata->setpoint - piddata->processvalue;
+
+    if (e > MAX_ERROR)
+        e = MAX_ERROR;
+    else if (e < -MAX_ERROR)
+        e = -MAX_ERROR;
+
+    if ((piddata->esum + e) > MAX_ERROR_SUM) 
+        piddata->esum = MAX_ERROR_SUM;
+    else if ((piddata->esum + e) < -MAX_ERROR_SUM)
+        piddata->esum = -MAX_ERROR_SUM;
+    
+    // limiting of terms could be included here.
+    // calculate P-term
+    pterm = piddata->P_factor * e;
+    // calculate I-term
+    iterm = piddata->I_factor * piddata->esum;
+    // calculate D-term
+    // for more robustness, base D-term to change in process value only (ref.: AVR221)
+    dterm = piddata->D_factor * (piddata->processvalue - piddata->last_pv);
+    
+    u = pterm + iterm + dterm;
+    
+    return u / SCALING_FACTOR;
+}
+
+void pid_set_output(int32_t y)
+{
+    if (y > MAX_OUTPUT)
+        PWM = MAX_OUTPUT;
+    else if (y < MIN_OUTPUT)
+        PWM = MIN_OUTPUT;
+    else
+        PWM = (uint8_t) y;
+}
+
+uint8_t pid_get_output()
+{
+    return PWM;
+}
+
+uint8_t pid_read_pv()
 {
     uint8_t a = 0, i = 0;
 
@@ -124,11 +171,20 @@ uint8_t read_pv()
     return a/4;
 }
 
-void pid_save_parameters()
+void pid_save_parameters(struct PID_DATA *piddata)
 {
-    eeprom_write_byte(&eeKp, Kp);
-    eeprom_write_byte(&eeKi, Ki);
-    eeprom_write_byte(&eeKd, Kd);
-    eeprom_write_byte(&eeInitValue, InitValue);
-    eeprom_write_byte(&eeInitMode, InitMode);
+    eeprom_write_word(&eeP_factor,  piddata->P_factor);
+    eeprom_write_word(&eeI_factor,  piddata->I_factor);
+    eeprom_write_word(&eeD_factor,  piddata->D_factor);
+    eeprom_write_byte(&eeInitValue, piddata->InitValue);
+    eeprom_write_byte(&eeInitMode,  piddata->InitMode);
+}
+
+void pid_load_parameters(struct PID_DATA *piddata)
+{
+    piddata->P_factor  = eeprom_read_word(&eeP_factor);
+    piddata->I_factor  = eeprom_read_word(&eeI_factor);
+    piddata->D_factor  = eeprom_read_word(&eeD_factor);
+    piddata->InitMode  = eeprom_read_byte(&eeInitMode);
+    piddata->InitValue = eeprom_read_byte(&eeInitValue);
 }

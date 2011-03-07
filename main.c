@@ -42,15 +42,24 @@
 */
 
 #include <avr/io.h>
-#include "cli.h"
 #include "pid.h"
+
+extern struct PID_FLAGS *pid_flags;
 
 void main()
 {
-    init_pid();
-    init_cli();
+    struct PID_DATA *piddata;
+
+    init_periph();
+    piddata = init_pid();
+
+    //init_cli();
 
     while (1) {
-        command_loop();
+        //command_loop();
+        
+        if (pid_flags->timer == 1) {
+            pid_run(piddata); 
+        }
     }
 }
