@@ -71,6 +71,10 @@ class tinyPID (object):
 		self.com = serial.Serial(*args, **kwargs)
 		if not self.com.getTimeout():
 			self.com.setTimeout(2)
+	
+	def __del__(self):
+		del self.com
+
 
 	def __readc(self, count=1):
 		""" Read and return character(s). """
@@ -98,10 +102,14 @@ class tinyPID (object):
 		for i in range(0, count):
 			b = self.__readb(2)
 			if b is not None and len(b) == 2:
-				r.append = to_word(b[0], b[1])
-		return r
-
-
+				r.append(to_word(b[0], b[1]))
+		
+		if len(r) == 1:
+			return r[0]
+		elif len(r) == 0:
+			return None
+		else:
+			return r
 
 	def __write(self, *args):
 		""" Write characters/bytes. """
@@ -114,7 +122,8 @@ class tinyPID (object):
 
 	def __writew(self, word):
 		""" Write a long number as MSB/LSB-pair. """
-		self.__write(to_bytes(word))
+		msb, lsb = to_bytes(word)
+		self.__write(msb, lsb)
 		
 
 	def get_mode(self):
@@ -159,7 +168,6 @@ class tinyPID (object):
 		self.__write("gv")
 		return self.__readb()
 
-
 	def get_output(self):
 		""" Get output value 'y'. """
 		self.com.flush()
@@ -168,7 +176,6 @@ class tinyPID (object):
 
 	def set_Kp(self, Kp):
 		""" Set proportional factor 'Kp'. """
-		Kp = pfactor_scale(Kp)
 		self.com.flush()
 		self.__write("spp")
 		self.__writew(pfactor_scale(Kp))
@@ -244,7 +251,7 @@ class tinyPID (object):
 			return self.get_mode()
 
 		elif name == "w" or name == "SP":
-			return self.get_value()
+			return self.get_setpoint()
 		elif name == "x" or name == "PV":
 			return self.get_pv()
 		elif name == "y":
@@ -267,7 +274,7 @@ class tinyPID (object):
 			self.set_Kd(Kd)
 			
 		elif name == "w" or name == "SP":
-			self.set_value(value)
+			self.set_setpoint(value)
 
 		elif name == "y":
 			self.set_output(value)

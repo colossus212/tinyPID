@@ -59,7 +59,7 @@ uint16_t get_word()
     
 	a = softuart_getchar();
     b = softuart_getchar();
-    return (a << 8) & b;
+    return (a << 8) + b;
 }
 
 void put_word(uint16_t word)
@@ -138,15 +138,15 @@ void command_loop(struct PID_DATA *piddata)
                 c = softuart_getchar();
                 switch (c) {
                     case 'v':
-                        put_word(piddata->setpoint);
+                        softuart_putchar(piddata->setpoint);
                     break;
 
                     case 'x':
-                        put_word(piddata->processvalue);
+                        softuart_putchar(piddata->processvalue);
                     break;
 
                     case 'y':
-                        put_word(pid_get_output());
+                        softuart_putchar(pid_get_output());
                     break;
 
                     case 'p':

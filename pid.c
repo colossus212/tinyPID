@@ -49,14 +49,24 @@ void init_periph()
 
 struct PID_DATA* init_pid()
 {
-    struct PID_DATA initdata = {0,0,0,0,0,0,0,0,0,0,0};
-    struct PID_DATA *piddata = &initdata;
+    struct PID_DATA *piddata;
+	
+	piddata->P_factor = 0;
+    piddata->I_factor = 0;
+    piddata->D_factor = 0;
+    piddata->InitMode = STOP;
+    piddata->InitValue = 0;
+    piddata->manual_output = 0;
+    piddata->setpoint = 0;
+    piddata->opmode = STOP;
+    piddata->processvalue = 0;
+    piddata->last_pv = 0;
+	piddata->esum = 0;
 
     cli();
 
     pid_flags->timer = 0;
 
-    piddata->opmode = STOP;
     pid_set_output(0);
     pid_load_parameters(piddata);
 

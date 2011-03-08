@@ -52,14 +52,15 @@ int main()
     struct PID_DATA *piddata;
 
     init_periph();
-    piddata = init_pid();
-
-    init_cli();
-
+	init_cli();
+    
+	piddata = init_pid();
+	
     while (1) {
         command_loop(piddata);
         
         if (pid_flags->timer == 1) {
+			pid_flags->timer = 0;
             pid_run(piddata); 
         }
     }
