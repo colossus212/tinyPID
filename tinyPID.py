@@ -47,7 +47,7 @@ def pfactor_scale(kp):
 	return int(round(f))
 
 def pfactor_unscale(f):
-	return int(round(p/SCALING_FACTOR))
+	return int(round(f/SCALING_FACTOR))
 
 def ifactor_scale(ki):
 	f = SCALING_FACTOR * SAMPLING_TIME * ki 

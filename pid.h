@@ -1,3 +1,6 @@
+#ifndef __PID_H__
+#define __PID_H__
+
 #include <avr/io.h>
 
 // Peripherals
@@ -51,3 +54,5 @@ uint8_t pid_get_output();
 
 void pid_save_parameters(struct PID_DATA *piddata);
 void pid_load_parameters(struct PID_DATA *piddata);
+
+#endif
