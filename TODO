@@ -1,1 +1,3 @@
 * dokumentiere P_factor, etc in regleralgorithmus!
+* implementiere neue pid funktionen und kommandos in cli.c
+* implementiere neue kommandos in tinyPID.py
