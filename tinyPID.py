@@ -9,6 +9,9 @@
 
 import serial
 
+SAMPLING_TIME  = 16e-3
+SCALING_FACTOR = 128
+
 def Ki_to_Tn(kp, ki):
     if ki > 0:
         return float(kp)/ki
@@ -29,6 +32,19 @@ def Tn_to_Ki(kp, tn):
 
 def Tv_to_Kd(kp, tv):
     return kp * tv
+
+def pfactor(kp):
+	f = SCALING_FACTOR * kp 
+	return int(round(f))
+
+def ifactor(ki):
+	f = SCALING_FACTOR * SAMPLING_TIME * ki 
+	print f
+	return int(round(f))
+	
+def dfactor(kd):
+	f = SCALING_FACTOR * kd/SAMPLING_TIME 
+	return int(round(f))
 
 
 class tinyPID (object):
