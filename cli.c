@@ -47,6 +47,9 @@
 #include <util/delay.h>
 #include "cli.h"
 #include "softuart.h"
+#include "pid.h"
+
+extern struct PID_DATA piddata;
 
 void init_cli()
 {
@@ -69,7 +72,7 @@ void put_word(uint16_t word)
     softuart_putchar((uint8_t) (word & 0x00FF));	
 }
 
-void command_loop(struct PID_DATA *piddata)
+void command_loop()
 {
     char c;
 
@@ -77,15 +80,15 @@ void command_loop(struct PID_DATA *piddata)
         c = softuart_getchar();
         switch (c) {
             case 'a':
-                piddata->opmode = AUTO;
+                piddata.opmode = AUTO;
             break;
 
             case 'm':
-                piddata->opmode = MANUAL;
+                piddata.opmode = MANUAL;
             break;
 
             case 'o':
-                piddata->opmode = STOP;
+                piddata.opmode = STOP;
             break;
 			
 			case 'r':
@@ -100,34 +103,34 @@ void command_loop(struct PID_DATA *piddata)
                 c = softuart_getchar();
                 switch (c) {
                     case 'v':
-                        piddata->setpoint = softuart_getchar();
+                        piddata.setpoint = softuart_getchar();
                     break;
 
                     case 'p':
 						c = softuart_getchar();
 						switch (c) {
 							case 'p':
-								piddata->P_factor = get_word();
+								piddata.P_factor = get_word();
 							break;
 							
 							case 'i':
-								piddata->I_factor = get_word();
+								piddata.I_factor = get_word();
 							break;
 							
 							case 'd':
-								piddata->D_factor = get_word();
+								piddata.D_factor = get_word();
 							break;
 						}
                     break;
 
                     case 'i':
-						piddata->InitMode  = softuart_getchar();
-						piddata->InitValue = softuart_getchar();
+						piddata.InitMode  = softuart_getchar();
+						piddata.InitValue = softuart_getchar();
                     break;
 
                     case 'y':
-						piddata->manual_output = softuart_getchar();
-                        piddata->opmode = MANUAL;
+						piddata.manual_output = softuart_getchar();
+                        piddata.opmode = MANUAL;
                     break;
                 }
             break;
@@ -136,11 +139,11 @@ void command_loop(struct PID_DATA *piddata)
                 c = softuart_getchar();
                 switch (c) {
                     case 'v':
-                        softuart_putchar(piddata->setpoint);
+                        softuart_putchar(piddata.setpoint);
                     break;
 
                     case 'x':
-                        softuart_putchar(piddata->processvalue);
+                        softuart_putchar(piddata.processvalue);
                     break;
 
                     case 'y':
@@ -151,27 +154,27 @@ void command_loop(struct PID_DATA *piddata)
                         c = softuart_getchar();
 						switch (c) {
 							case 'p':
-								put_word(piddata->P_factor);
+								put_word(piddata.P_factor);
 							break;
 							
 							case 'i':
-								put_word(piddata->I_factor);
+								put_word(piddata.I_factor);
 							break;
 							
 							case 'd':
-								put_word(piddata->D_factor);
+								put_word(piddata.D_factor);
 							break;
 							
 						}
                     break;
 
                     case 'm':
-                        softuart_putchar(piddata->opmode);
+                        softuart_putchar(piddata.opmode);
                     break;
 
                     case 'i':
-                        softuart_putchar(piddata->InitMode);
-                        softuart_putchar(piddata->InitValue);
+                        softuart_putchar(piddata.InitMode);
+                        softuart_putchar(piddata.InitValue);
                     break;
                 }
             break;

@@ -42,17 +42,17 @@ struct PID_FLAGS {
 };
 
 void init_periph();
-struct PID_DATA* init_pid();
+void init_pid();
 
-void pid_reset(struct PID_DATA *piddata);
-void pid_run(struct PID_DATA *piddata);
-int32_t pid_contr(struct PID_DATA *piddata);
+void pid_reset( );
+void pid_run( );
+int32_t pid_contr( );
 
 uint8_t pid_read_pv();
 void pid_set_output(int32_t y);
 uint8_t pid_get_output();
 
-void pid_save_parameters(struct PID_DATA *piddata);
-void pid_load_parameters(struct PID_DATA *piddata);
+void pid_save_parameters( );
+void pid_load_parameters( );
 
 #endif

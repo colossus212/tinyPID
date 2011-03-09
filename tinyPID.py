@@ -47,21 +47,21 @@ def pfactor_scale(kp):
 	return int(round(f))
 
 def pfactor_unscale(f):
-	return int(round(f/SCALING_FACTOR))
+	return f/float(SCALING_FACTOR)
 
 def ifactor_scale(ki):
-	f = SCALING_FACTOR * SAMPLING_TIME * ki 
+	f = ki * SCALING_FACTOR * SAMPLING_TIME 
 	return int(round(f))
 
 def ifactor_unscale(f):
-	return int(round(f/(SCALING_FACTOR * SAMPLING_TIME)))
+	return f/(SCALING_FACTOR * SAMPLING_TIME)
 
 def dfactor_scale(kd):
-	f = SCALING_FACTOR * kd/SAMPLING_TIME 
+	f = kd * SCALING_FACTOR/SAMPLING_TIME 
 	return int(round(f))
 
 def dfactor_unscale(f):
-	return int(round(f/SCALING_FACTOR * SAMPLING_TIME))
+	return f * SAMPLING_TIME/SCALING_FACTOR
 
 
 

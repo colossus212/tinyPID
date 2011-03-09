@@ -9,6 +9,8 @@ uint16_t eeD_factor EEMEM = 0;
 uint8_t eeInitValue EEMEM = 0;
 uint8_t eeInitMode EEMEM = STOP;
 
+struct PID_DATA piddata = {0,0,0,STOP,0,0,0,STOP,0,0,0};
+
 uint8_t sampleflag = 0;
 
 ISR(WDT_vect)
@@ -47,99 +49,85 @@ void init_periph()
     sei();
 }
 
-struct PID_DATA* init_pid()
+void init_pid()
 {
-    struct PID_DATA *piddata;
-	
-	piddata->P_factor = 0;
-    piddata->I_factor = 0;
-    piddata->D_factor = 0;
-    piddata->InitMode = STOP;
-    piddata->InitValue = 0;
-    piddata->manual_output = 0;
-    piddata->setpoint = 0;
-    piddata->opmode = STOP;
-    piddata->processvalue = 0;
-    piddata->last_pv = 0;
-	piddata->esum = 0;
-
     cli();
 
     pid_set_output(0);
     pid_load_parameters(piddata);
 
-    if (piddata->InitMode == MANUAL) {
-        piddata->opmode = MANUAL;
-        piddata->manual_output = piddata->InitValue;
+    if (piddata.InitMode == MANUAL) {
+        piddata.opmode = MANUAL;
+        piddata.manual_output = piddata.InitValue;
     }
-    else if (piddata->InitMode == AUTO) {
-        piddata->opmode = AUTO;
-        piddata->setpoint = piddata->InitValue;
+    else if (piddata.InitMode == AUTO) {
+        piddata.opmode = AUTO;
+        piddata.setpoint = piddata.InitValue;
     }
-    else if (piddata->InitMode == STOP) {
-        piddata->opmode = STOP;
+    else if (piddata.InitMode == STOP) {
+        piddata.opmode = STOP;
     }
     else {
-        piddata->InitMode = STOP;
-        piddata->opmode   = STOP;
+        piddata.InitMode = STOP;
+        piddata.opmode   = STOP;
     }
 
     sei();
 
-    return piddata;
+//     return piddata;
 }
 
-void pid_run(struct PID_DATA *piddata)
+void pid_run()
 {
     int32_t y = 0;
 	
-    piddata->last_pv = piddata->processvalue;
-    piddata->processvalue = pid_read_pv();
+    piddata.last_pv = piddata.processvalue;
+    piddata.processvalue = pid_read_pv();
 
-    if (piddata->opmode == AUTO) {
+    if (piddata.opmode == AUTO) {
         y = pid_contr(piddata);
         pid_set_output(y);
     }
-    else if (piddata->opmode == STOP) {
+    else if (piddata.opmode == STOP) {
         pid_set_output(0);
     }
-    else if (piddata->opmode == MANUAL) {
-        pid_set_output(piddata->manual_output);
+    else if (piddata.opmode == MANUAL) {
+        pid_set_output(piddata.manual_output);
     }
 }
 
-void pid_reset(struct PID_DATA *piddata) 
+void pid_reset() 
 {
-    piddata->esum = 0;
-    piddata->last_pv = 0;
-    piddata->processvalue = 0;
+    piddata.esum = 0;
+    piddata.last_pv = 0;
+    piddata.processvalue = 0;
 }
 
-int32_t pid_contr(struct PID_DATA *piddata)
+int32_t pid_contr()
 {
     int16_t e, pterm, iterm, dterm;
     int32_t u;
 
-    e = piddata->setpoint - piddata->processvalue;
+    e = piddata.setpoint - piddata.processvalue;
 
     if (e > MAX_ERROR)
         e = MAX_ERROR;
     else if (e < -MAX_ERROR)
         e = -MAX_ERROR;
 
-    if ((piddata->esum + e) > MAX_ERROR_SUM) 
-        piddata->esum = MAX_ERROR_SUM;
-    else if ((piddata->esum + e) < -MAX_ERROR_SUM)
-        piddata->esum = -MAX_ERROR_SUM;
+    if ((piddata.esum + e) > MAX_ERROR_SUM) 
+        piddata.esum = MAX_ERROR_SUM;
+    else if ((piddata.esum + e) < -MAX_ERROR_SUM)
+        piddata.esum = -MAX_ERROR_SUM;
     
     // limiting of terms could be included here.
     // calculate P-term
-    pterm = piddata->P_factor * e;
+    pterm = piddata.P_factor * e;
     // calculate I-term
-    iterm = piddata->I_factor * piddata->esum;
+    iterm = piddata.I_factor * piddata.esum;
     // calculate D-term
     // for more robustness, base D-term to change in process value only (ref.: AVR221)
-    dterm = piddata->D_factor * (piddata->processvalue - piddata->last_pv);
+    dterm = piddata.D_factor * (piddata.processvalue - piddata.last_pv);
     
     u = pterm + iterm + dterm;
     
@@ -179,20 +167,20 @@ uint8_t pid_read_pv()
     return a/4;
 }
 
-void pid_save_parameters(struct PID_DATA *piddata)
+void pid_save_parameters()
 {
-    eeprom_write_word(&eeP_factor,  piddata->P_factor);
-    eeprom_write_word(&eeI_factor,  piddata->I_factor);
-    eeprom_write_word(&eeD_factor,  piddata->D_factor);
-    eeprom_write_byte(&eeInitValue, piddata->InitValue);
-    eeprom_write_byte(&eeInitMode,  piddata->InitMode);
+    eeprom_write_word(&eeP_factor,  piddata.P_factor);
+    eeprom_write_word(&eeI_factor,  piddata.I_factor);
+    eeprom_write_word(&eeD_factor,  piddata.D_factor);
+    eeprom_write_byte(&eeInitValue, piddata.InitValue);
+    eeprom_write_byte(&eeInitMode,  piddata.InitMode);
 }
 
-void pid_load_parameters(struct PID_DATA *piddata)
+void pid_load_parameters()
 {
-    piddata->P_factor  = eeprom_read_word(&eeP_factor);
-    piddata->I_factor  = eeprom_read_word(&eeI_factor);
-    piddata->D_factor  = eeprom_read_word(&eeD_factor);
-    piddata->InitMode  = eeprom_read_byte(&eeInitMode);
-    piddata->InitValue = eeprom_read_byte(&eeInitValue);
+    piddata.P_factor  = eeprom_read_word(&eeP_factor);
+    piddata.I_factor  = eeprom_read_word(&eeI_factor);
+    piddata.D_factor  = eeprom_read_word(&eeD_factor);
+    piddata.InitMode  = eeprom_read_byte(&eeInitMode);
+    piddata.InitValue = eeprom_read_byte(&eeInitValue);
 }
