@@ -44,6 +44,7 @@
 
 #include <avr/pgmspace.h>
 #include <avr/interrupt.h>
+#include <util/delay.h>
 #include "cli.h"
 #include "softuart.h"
 
@@ -64,11 +65,8 @@ uint16_t get_word()
 
 void put_word(uint16_t word)
 {
-    uint8_t msb = word >> 8;
-    uint8_t lsb = word & 0x00FF;
-	
-    softuart_putchar(msb);
-    softuart_putchar(lsb);
+    softuart_putchar((uint8_t) (word >> 8));
+    softuart_putchar((uint8_t) (word & 0x00FF));	
 }
 
 void command_loop(struct PID_DATA *piddata)

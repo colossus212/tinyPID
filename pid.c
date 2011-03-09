@@ -9,13 +9,13 @@ uint16_t eeD_factor EEMEM = 0;
 uint8_t eeInitValue EEMEM = 0;
 uint8_t eeInitMode EEMEM = STOP;
 
-struct PID_FLAGS *pid_flags;
+uint8_t sampleflag = 0;
 
 ISR(WDT_vect)
 {
 	// keep WDT from resetting, interrupt instead
 	WDTCR |= (1 << WDIE);
-    pid_flags->timer = 1;
+    sampleflag = 1;
 }
 
 void init_periph()
@@ -65,8 +65,6 @@ struct PID_DATA* init_pid()
 
     cli();
 
-    pid_flags->timer = 0;
-
     pid_set_output(0);
     pid_load_parameters(piddata);
 
@@ -94,7 +92,7 @@ struct PID_DATA* init_pid()
 void pid_run(struct PID_DATA *piddata)
 {
     int32_t y = 0;
-
+	
     piddata->last_pv = piddata->processvalue;
     piddata->processvalue = pid_read_pv();
 

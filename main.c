@@ -45,7 +45,7 @@
 #include "pid.h"
 #include "cli.h"
 
-extern struct PID_FLAGS *pid_flags;
+extern uint8_t sampleflag;
 
 int main()
 {
@@ -59,9 +59,9 @@ int main()
     while (1) {
         command_loop(piddata);
         
-        if (pid_flags->timer == 1) {
-			pid_flags->timer = 0;
-            pid_run(piddata); 
+        if (sampleflag == 1) {
+			sampleflag = 0;
+			pid_run(piddata); 
         }
     }
     
