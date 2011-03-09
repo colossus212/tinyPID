@@ -50,12 +50,8 @@ extern struct PID_DATA piddata;
 
 int main()
 {
-//     struct PID_DATA *piddata;
-
     init_periph();
 	init_cli();
-    
-// 	piddata = init_pid();
 	init_pid();
 	
     while (1) {
@@ -63,7 +59,6 @@ int main()
         
         if (sampleflag == 1) {
 			sampleflag = 0;
-// 			pid_run(piddata); 
 			pid_run();
         }
     }
