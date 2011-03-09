@@ -14,7 +14,7 @@
 // Controller Constants
 #define SAMPLING_TIME  16
 #define SCALING_FACTOR 128 
-#define MAX_ERROR_SUM  500
+#define MAX_ERROR_SUM  1024
 #define MAX_ERROR      255 
 #define MAX_OUTPUT     255
 #define MIN_OUTPUT     0
@@ -25,10 +25,7 @@ struct PID_DATA {
     uint16_t P_factor;
     uint16_t I_factor;
     uint16_t D_factor;
-    uint8_t InitMode;
-    uint8_t InitValue;
 
-    uint8_t manual_output;
     uint8_t setpoint;
     uint8_t opmode;
     uint8_t processvalue;

@@ -6,10 +6,10 @@
 uint16_t eeP_factor EEMEM = 0;
 uint16_t eeI_factor EEMEM = 0;
 uint16_t eeD_factor EEMEM = 0;
-uint8_t eeInitValue EEMEM = 0;
-uint8_t eeInitMode EEMEM = STOP;
+uint8_t eeSetpoint EEMEM = 0;
+uint8_t eeOpmode EEMEM = STOP;
 
-struct PID_DATA piddata = {0,0,0,STOP,0,0,0,STOP,0,0,0};
+struct PID_DATA piddata = {0,0,0,0,STOP,0,0,0};
 
 uint8_t sampleflag = 0;
 
@@ -25,7 +25,7 @@ void init_periph()
     cli();
 
     // I/O setup
-    IO_PORT = 0xFF;
+    IO_PORT = 0x00;
     IO_DDR |=_BV(IO_PWM);
 
     // PWM setup
@@ -42,8 +42,8 @@ void init_periph()
     // ADC setup
     // enable ADC, VCC ref., set prescaler to 8
     ADCSRA = (1 << ADEN) | (1 << ADPS1) | (1 << ADPS0);
-    // set ADC channel, left-justify result
-    ADMUX = ADCHAN | (1 << ADLAR);
+    // set ADC channel
+    ADMUX = ADCHAN;
 
     // enable interrupts
     sei();
@@ -52,29 +52,9 @@ void init_periph()
 void init_pid()
 {
     cli();
-
     pid_set_output(0);
     pid_load_parameters(piddata);
-
-    if (piddata.InitMode == MANUAL) {
-        piddata.opmode = MANUAL;
-        piddata.manual_output = piddata.InitValue;
-    }
-    else if (piddata.InitMode == AUTO) {
-        piddata.opmode = AUTO;
-        piddata.setpoint = piddata.InitValue;
-    }
-    else if (piddata.InitMode == STOP) {
-        piddata.opmode = STOP;
-    }
-    else {
-        piddata.InitMode = STOP;
-        piddata.opmode   = STOP;
-    }
-
     sei();
-
-//     return piddata;
 }
 
 void pid_run()
@@ -91,9 +71,6 @@ void pid_run()
     else if (piddata.opmode == STOP) {
         pid_set_output(0);
     }
-    else if (piddata.opmode == MANUAL) {
-        pid_set_output(piddata.manual_output);
-    }
 }
 
 void pid_reset() 
@@ -105,8 +82,8 @@ void pid_reset()
 
 int32_t pid_contr()
 {
-    int16_t e, pterm, iterm, dterm;
-    int32_t u;
+    int16_t e;
+    int32_t u, pterm, iterm, dterm;
 
     e = piddata.setpoint - piddata.processvalue;
 
@@ -151,36 +128,37 @@ uint8_t pid_get_output()
 
 uint8_t pid_read_pv()
 {
-    uint8_t a = 0, i = 0;
+    uint16_t a = 0;
+	uint8_t i = 0;
 
-    ADMUX = ADCHAN | (1 << ADLAR);
+    ADMUX = ADCHAN ;
 	
 	// read ADC, take 4 samples
 	for (i=0; i < 4; i++) {
 		ADCSRA |= (1 << ADSC);         // start conversion
 		while (ADCSRA & (1 << ADSC));  // wait till end of conversion
 
-		a = ADCL;      // must be read first
-        a = ADCH;      // overwrite with 8 MSB
+		a += ADCW;
 	}
-
-    return a/4;
+	a /= 4;
+	a  = a>>2;
+    return (uint8_t) a;
 }
 
 void pid_save_parameters()
 {
-    eeprom_write_word(&eeP_factor,  piddata.P_factor);
-    eeprom_write_word(&eeI_factor,  piddata.I_factor);
-    eeprom_write_word(&eeD_factor,  piddata.D_factor);
-    eeprom_write_byte(&eeInitValue, piddata.InitValue);
-    eeprom_write_byte(&eeInitMode,  piddata.InitMode);
+    eeprom_write_word(&eeP_factor, piddata.P_factor);
+    eeprom_write_word(&eeI_factor, piddata.I_factor);
+    eeprom_write_word(&eeD_factor, piddata.D_factor);
+    eeprom_write_byte(&eeSetpoint, piddata.setpoint);
+    eeprom_write_byte(&eeOpmode,   piddata.opmode);
 }
 
 void pid_load_parameters()
 {
-    piddata.P_factor  = eeprom_read_word(&eeP_factor);
-    piddata.I_factor  = eeprom_read_word(&eeI_factor);
-    piddata.D_factor  = eeprom_read_word(&eeD_factor);
-    piddata.InitMode  = eeprom_read_byte(&eeInitMode);
-    piddata.InitValue = eeprom_read_byte(&eeInitValue);
+    piddata.P_factor = eeprom_read_word(&eeP_factor);
+    piddata.I_factor = eeprom_read_word(&eeI_factor);
+    piddata.D_factor = eeprom_read_word(&eeD_factor);
+    piddata.opmode   = eeprom_read_byte(&eeOpmode);
+    piddata.setpoint = eeprom_read_byte(&eeSetpoint);
 }

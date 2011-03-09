@@ -155,7 +155,7 @@ void command_loop()
 		
 		case sy:
 			state_reset();
-			piddata.manual_output = c;
+			pid_set_output(c);
 			piddata.opmode = MANUAL;
 		break;
 		
@@ -175,8 +175,6 @@ void command_loop()
 		
 		case sim:
 			state_reset();
-			piddata.InitMode = msb;
-			piddata.InitValue = c;
 		break;
 		
 		case g:
@@ -193,10 +191,6 @@ void command_loop()
 					softuart_putchar(pid_get_output());
 				else if (c == 'm')
 					softuart_putchar(piddata.opmode);
-				else if (c == 'i') {
-					softuart_putchar(piddata.InitMode);
-					softuart_putchar(piddata.InitValue);
-				}
 			}
 		break;
 		
