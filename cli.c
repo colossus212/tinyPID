@@ -51,133 +51,173 @@
 
 extern struct PID_DATA piddata;
 
+enum states {
+	init, 
+	g, gp, 
+	s, sp, 
+	sy, sv,  
+	si, sim,
+	spp, sppM, 
+	spi, spiM, 
+	spd, spdM,
+};
+
+#define state_reset() (state = init)
+
 void init_cli()
 {
     softuart_init();
     sei();
 }
 
-uint16_t get_word()
-{
-    char a, b;
-    
-	a = softuart_getchar();
-    b = softuart_getchar();
-    return (a << 8) + b;
-}
-
-void put_word(uint16_t word)
-{
-    softuart_putchar((uint8_t) (word >> 8));
-    softuart_putchar((uint8_t) (word & 0x00FF));	
-}
-
 void command_loop()
 {
-    char c;
-
-    if (softuart_kbhit()) {
-        c = softuart_getchar();
-        switch (c) {
-            case 'a':
-                piddata.opmode = AUTO;
-            break;
-
-            case 'm':
-                piddata.opmode = MANUAL;
-            break;
-
-            case 'o':
-                piddata.opmode = STOP;
-            break;
+	char c;
+	static char msb = 0;
+	static uint8_t state  = init;
+	
+	if (softuart_kbhit() == 1)
+		c = softuart_getchar();
+	else 
+		return;
+	
+	switch (state) {
+		case init:
+			if (c == 's')
+				state = s;
+			else if (c == 'g')
+				state = g;
+			else if (c == 'a')
+				piddata.opmode = AUTO;
+			else if (c == 'm')
+				piddata.opmode = MANUAL;
+			else if (c == 'o')
+				piddata.opmode = STOP;
+			else if (c == 'r')
+				pid_reset();
+			else if (c == 'e')
+				pid_save_parameters();
+		break;
+		
+		case s:
+			if (c == 'v') 
+				state = sv;
+			else if (c == 'y')
+				state = sy;
+			else if (c == 'p')
+				state = sp;
+			else if (c == 'i')
+				state = si;
+			else
+				state_reset();
+		break;
+		
+		case sp:
+			if (c == 'p')
+				state = spp;
+			else if (c == 'i')
+				state = spi;
+			else if (c == 'd')
+				state = spd;
+			else
+				state_reset();
+		break;
+		
+		case spp:
+			msb = c;
+			state = sppM;
+		break;
+		
+		case spi:
+			msb = c;
+			state = spiM;
+		break;
+		
+		case spd:
+			msb = c;
+			state = spdM;
+		break;
+		
+		case sppM:
+			state_reset();
+			piddata.P_factor = (msb << 8) + c;
+		break;
+		
+		case spiM:
+			state_reset();
+			piddata.I_factor = (msb << 8) + c;
+		break;
+		
+		case spdM:
+			state_reset();
+			piddata.D_factor = (msb << 8) + c;
+		break;
+		
+		case sy:
+			state_reset();
+			piddata.manual_output = c;
+			piddata.opmode = MANUAL;
+		break;
+		
+		case sv:
+			state_reset();
+			piddata.setpoint = c;
+		break;
+		
+		case si:
+			if (c == 'a' || c == 'm' || c == 'o') {
+				state = sim;
+				msb = c;
+			}
+			else 
+				state_reset();
+		break;
+		
+		case sim:
+			state_reset();
+			piddata.InitMode = msb;
+			piddata.InitValue = c;
+		break;
+		
+		case g:
+			if (c == 'p')
+				state = gp;
+			else {
+				state_reset();
+				
+				if (c == 'v') 
+					softuart_putchar(piddata.setpoint);
+				else if (c == 'x') 
+					softuart_putchar(piddata.processvalue);
+				else if (c == 'y') 
+					softuart_putchar(pid_get_output());
+				else if (c == 'm')
+					softuart_putchar(piddata.opmode);
+				else if (c == 'i') {
+					softuart_putchar(piddata.InitMode);
+					softuart_putchar(piddata.InitValue);
+				}
+			}
+		break;
+		
+		case gp:
+			state_reset();
 			
-			case 'r':
-				pid_reset(piddata);
-			break;
-			
-			case 'e':
-				pid_save_parameters(piddata);
-			break;
-
-            case 's':
-                c = softuart_getchar();
-                switch (c) {
-                    case 'v':
-                        piddata.setpoint = softuart_getchar();
-                    break;
-
-                    case 'p':
-						c = softuart_getchar();
-						switch (c) {
-							case 'p':
-								piddata.P_factor = get_word();
-							break;
-							
-							case 'i':
-								piddata.I_factor = get_word();
-							break;
-							
-							case 'd':
-								piddata.D_factor = get_word();
-							break;
-						}
-                    break;
-
-                    case 'i':
-						piddata.InitMode  = softuart_getchar();
-						piddata.InitValue = softuart_getchar();
-                    break;
-
-                    case 'y':
-						piddata.manual_output = softuart_getchar();
-                        piddata.opmode = MANUAL;
-                    break;
-                }
-            break;
-
-            case 'g':
-                c = softuart_getchar();
-                switch (c) {
-                    case 'v':
-                        softuart_putchar(piddata.setpoint);
-                    break;
-
-                    case 'x':
-                        softuart_putchar(piddata.processvalue);
-                    break;
-
-                    case 'y':
-                        softuart_putchar(pid_get_output());
-                    break;
-
-                    case 'p':
-                        c = softuart_getchar();
-						switch (c) {
-							case 'p':
-								put_word(piddata.P_factor);
-							break;
-							
-							case 'i':
-								put_word(piddata.I_factor);
-							break;
-							
-							case 'd':
-								put_word(piddata.D_factor);
-							break;
-							
-						}
-                    break;
-
-                    case 'm':
-                        softuart_putchar(piddata.opmode);
-                    break;
-
-                    case 'i':
-                        softuart_putchar(piddata.InitMode);
-                        softuart_putchar(piddata.InitValue);
-                    break;
-                }
-            break;
-        }
-    }
+			if (c == 'p') {
+				softuart_putchar((uint8_t) (piddata.P_factor >> 8));
+				softuart_putchar((uint8_t) (piddata.P_factor & 0xFF));
+			}
+			else if (c == 'i') {
+				softuart_putchar((uint8_t) (piddata.I_factor >> 8));
+				softuart_putchar((uint8_t) (piddata.I_factor & 0xFF));
+			}
+			else if (c == 'd') {
+				softuart_putchar((uint8_t) (piddata.D_factor >> 8));
+				softuart_putchar((uint8_t) (piddata.D_factor & 0xFF));
+			}
+		break;
+		
+		default: 
+			state = init;
+    }    
 }

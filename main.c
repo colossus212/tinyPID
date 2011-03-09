@@ -59,7 +59,7 @@ int main()
 	init_pid();
 	
     while (1) {
-        command_loop(piddata);
+        command_loop();
         
         if (sampleflag == 1) {
 			sampleflag = 0;
