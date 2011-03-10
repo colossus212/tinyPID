@@ -71,7 +71,7 @@ enum states {
  */
 uint8_t testchar(char expected, char received)
 {
-	return (expected == received || expected == (received & expected));
+	return (expected == received || expected == (received - 128));
 }
 
 void init_cli()
