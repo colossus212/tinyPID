@@ -44,18 +44,23 @@
 #include <avr/io.h>
 #include "pid.h"
 #include "cli.h"
+#include "softuart.h"
 
 extern uint8_t sampleflag;
-extern struct PID_DATA piddata;
 
 int main()
 {
+	char c;
     init_periph();
 	init_cli();
 	init_pid();
 	
     while (1) {
-        command_loop();
+
+		if (softuart_kbhit()) {
+			c = softuart_getchar();
+			command_loop(c);
+		}
         
         if (sampleflag == 1) {
 			sampleflag = 0;

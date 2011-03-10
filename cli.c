@@ -64,60 +64,64 @@ enum states {
 
 #define state_reset() (state = init)
 
+/* This is a very dirty workaround to a communication error with softuart.
+ * Sometimes, bytes are received in a strange way, adding one most-significant
+ * bit to the character. 
+ * This function tries to restore the byte to an expected character.
+ */
+uint8_t testchar(char expected, char received)
+{
+	return (expected == received || expected == (received & expected));
+}
+
 void init_cli()
 {
     softuart_init();
     sei();
 }
 
-void command_loop()
+void command_loop(char c)
 {
-	char c;
 	static char msb = 0;
-	static uint8_t state  = init;
-	
-	if (softuart_kbhit() == 1)
-		c = softuart_getchar();
-	else 
-		return;
+	static uint8_t state = init;
 	
 	switch (state) {
 		case init:
-			if (c == 's')
+			if (testchar('s', c))
 				state = s;
-			else if (c == 'g')
+			else if (testchar('g', c))
 				state = g;
-			else if (c == 'a')
+			else if (testchar('a', c))
 				piddata.opmode = AUTO;
-			else if (c == 'm')
+			else if (testchar('m', c))
 				piddata.opmode = MANUAL;
-			else if (c == 'o')
+			else if (testchar('o', c))
 				piddata.opmode = STOP;
-			else if (c == 'r')
+			else if (testchar('r', c))
 				pid_reset();
-			else if (c == 'e')
+			else if (testchar('e', c))
 				pid_save_parameters();
 		break;
 		
 		case s:
-			if (c == 'v') 
+			if (testchar('v', c)) 
 				state = sv;
-			else if (c == 'y')
+			else if (testchar('y', c))
 				state = sy;
-			else if (c == 'p')
+			else if (testchar('p', c))
 				state = sp;
-			else if (c == 'i')
+			else if (testchar('i', c))
 				state = si;
 			else
 				state_reset();
 		break;
 		
 		case sp:
-			if (c == 'p')
+			if (testchar('p', c))
 				state = spp;
-			else if (c == 'i')
+			else if (testchar('i', c))
 				state = spi;
-			else if (c == 'd')
+			else if (testchar('d', c))
 				state = spd;
 			else
 				state_reset();
@@ -165,7 +169,7 @@ void command_loop()
 		break;
 		
 		case si:
-			if (c == 'a' || c == 'm' || c == 'o') {
+			if (testchar('a', c) || testchar('m', c) || testchar('o', c)) {
 				state = sim;
 				msb = c;
 			}
@@ -178,18 +182,19 @@ void command_loop()
 		break;
 		
 		case g:
-			if (c == 'p')
+			if (testchar('p', c))
 				state = gp;
 			else {
 				state_reset();
-				
-				if (c == 'v') 
+
+				if (testchar('v', c)) 
 					softuart_putchar(piddata.setpoint);
-				else if (c == 'x') 
+				else if (testchar('x', c)) {
 					softuart_putchar(piddata.processvalue);
-				else if (c == 'y') 
+				}
+				else if (testchar('y', c)) 
 					softuart_putchar(pid_get_output());
-				else if (c == 'm')
+				else if (testchar('m', c))
 					softuart_putchar(piddata.opmode);
 			}
 		break;
@@ -197,15 +202,15 @@ void command_loop()
 		case gp:
 			state_reset();
 			
-			if (c == 'p') {
+			if (testchar('p', c)) {
 				softuart_putchar((uint8_t) (piddata.P_factor >> 8));
 				softuart_putchar((uint8_t) (piddata.P_factor & 0xFF));
 			}
-			else if (c == 'i') {
+			else if (testchar('i', c)) {
 				softuart_putchar((uint8_t) (piddata.I_factor >> 8));
 				softuart_putchar((uint8_t) (piddata.I_factor & 0xFF));
 			}
-			else if (c == 'd') {
+			else if (testchar('d', c)) {
 				softuart_putchar((uint8_t) (piddata.D_factor >> 8));
 				softuart_putchar((uint8_t) (piddata.D_factor & 0xFF));
 			}
