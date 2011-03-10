@@ -64,6 +64,7 @@ int main()
         
         if (sampleflag == 1) {
 			sampleflag = 0;
+// 			pid_set_output(-320);
 			pid_run();
         }
     }

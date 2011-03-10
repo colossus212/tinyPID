@@ -14,11 +14,11 @@
 // Controller Constants
 #define SAMPLING_TIME  16
 #define SCALING_FACTOR 128 
-#define MAX_ERROR_SUM  3000
+#define MAX_ERROR_SUM  1000
 #define MAX_OUTPUT     255
 #define MIN_OUTPUT     0
 
-enum modes {AUTO='a', MANUAL='m', STOP='o'};
+enum modes {AUTO='a', MANUAL='m'};
 
 struct PID_DATA {
     uint16_t P_factor;
@@ -42,11 +42,14 @@ void init_pid();
 
 void pid_reset( );
 void pid_run( );
-int32_t pid_contr( );
+void pid_contr( );
 
 uint8_t pid_read_pv();
 void pid_set_output(int32_t y);
 uint8_t pid_get_output();
+
+void pid_manual();
+void pid_auto();
 
 void pid_save_parameters( );
 void pid_load_parameters( );

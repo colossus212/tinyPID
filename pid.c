@@ -7,9 +7,9 @@ uint16_t eeP_factor EEMEM = 0;
 uint16_t eeI_factor EEMEM = 0;
 uint16_t eeD_factor EEMEM = 0;
 uint8_t eeSetpoint EEMEM = 0;
-uint8_t eeOpmode EEMEM = STOP;
+uint8_t eeOpmode EEMEM = MANUAL;
 
-struct PID_DATA piddata = {0,0,0,0,STOP,0,0,0};
+struct PID_DATA piddata = {0,0,0,0,MANUAL,0,0,0};
 
 uint8_t sampleflag = 0;
 
@@ -59,18 +59,11 @@ void init_pid()
 
 void pid_run()
 {
-    int32_t y = 0;
-	
     piddata.last_pv = piddata.processvalue;
     piddata.processvalue = pid_read_pv();
 
-    if (piddata.opmode == AUTO) {
-        y = pid_contr(piddata);
-        pid_set_output(y);
-    }
-    else if (piddata.opmode == STOP) {
-        pid_set_output(0);
-    }
+    if (piddata.opmode == AUTO)
+        pid_contr();
 }
 
 void pid_reset() 
@@ -80,19 +73,19 @@ void pid_reset()
     piddata.processvalue = 0;
 }
 
-int32_t pid_contr()
+void pid_contr()
 {
     int16_t e;
-    int32_t u, pterm, iterm, dterm;
+    int32_t pterm, iterm, dterm;
+	int64_t u;
 
     e = piddata.setpoint - piddata.processvalue;
+	piddata.esum += e;
 
-    if ((piddata.esum + e) > MAX_ERROR_SUM) 
+    if (piddata.esum > MAX_ERROR_SUM) 
         piddata.esum = MAX_ERROR_SUM;
-    else if ((piddata.esum + e) < -MAX_ERROR_SUM)
+    else if (piddata.esum < -MAX_ERROR_SUM)
         piddata.esum = -MAX_ERROR_SUM;
-	else
-		piddata.esum += e;
     
     // limiting of terms could be included here.
     // calculate P-term
@@ -103,9 +96,9 @@ int32_t pid_contr()
     // for more robustness, base D-term to change in process value only (ref.: AVR221)
     dterm = piddata.D_factor * (piddata.processvalue - piddata.last_pv);
     
-    u = pterm + iterm + dterm;
+    u = (pterm + iterm + dterm) / SCALING_FACTOR;
     
-    return u / SCALING_FACTOR;
+    pid_set_output( (int32_t) u);
 }
 
 void pid_set_output(int32_t y)
@@ -140,6 +133,18 @@ uint8_t pid_read_pv()
 	a /= 4;
 	a  = a>>2;
     return (uint8_t) a;
+}
+
+void pid_auto()
+{
+	pid_reset();
+	piddata.opmode = AUTO;
+}
+
+void pid_manual()
+{
+	pid_reset();
+	piddata.opmode = MANUAL;
 }
 
 void pid_save_parameters()

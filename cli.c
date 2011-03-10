@@ -92,11 +92,9 @@ void command_loop(char c)
 			else if (testchar('g', c))
 				state = g;
 			else if (testchar('a', c))
-				piddata.opmode = AUTO;
+				pid_auto();
 			else if (testchar('m', c))
-				piddata.opmode = MANUAL;
-			else if (testchar('o', c))
-				piddata.opmode = STOP;
+				pid_manual();
 			else if (testchar('r', c))
 				pid_reset();
 			else if (testchar('e', c))
