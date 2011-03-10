@@ -128,108 +128,92 @@ class tinyPID (object):
 
 	def get_mode(self):
 		""" Get operation mode. """
-		self.com.flush()
+		
 		self.__write("gm")
 		return self.__readc()
 
 	def get_Kp(self):
 		""" Get proportional factor. """
-		self.com.flush()
+		
 		self.__write("gpp")
 		return pfactor_unscale(self.__readw())
 
 	def get_Ki(self):
 		""" Get integral factor. """
-		self.com.flush()
+		
 		self.__write("gpi")
 		return ifactor_unscale(self.__readw())
         
 	def get_Kd(self):
 		""" Get derivative factor. """
-		self.com.flush()
+		
 		self.__write("gpd")
 		return dfactor_unscale(self.__readw())
 
-	def get_initial(self):
-		""" Get initial mode and value of the device. """
-		self.com.flush()
-		self.__write("gi")
-		return (self.__readc(), self.__readb())
-
 	def get_pv(self):
 		""" Get process value 'x'. """
-		self.com.flush()
+		
 		self.__write("gx")
 		return self.__readb()
 
 	def get_setpoint(self):
 		""" Get setpoint 'w'. """
-		self.com.flush()
+		
 		self.__write("gv")
 		return self.__readb()
 
 	def get_output(self):
 		""" Get output value 'y'. """
-		self.com.flush()
+		
 		self.__write("gy")
 		return self.__readb()
 
 	def set_Kp(self, Kp):
 		""" Set proportional factor 'Kp'. """
-		self.com.flush()
+		
 		self.__write("spp")
 		self.__writew(pfactor_scale(Kp))
         
 	def set_Ki(self, Ki):
 		""" Set integral factor 'Ki'. """
-		self.com.flush()
+		
 		self.__write("spi")
 		self.__writew(ifactor_scale(Ki))
 	
 	def set_Kd(self, Kd):
 		""" Set derivative factor 'Kd'. """
-		self.com.flush()
+		
 		self.__write("spd")
 		self.__writew(dfactor_scale(Kd))
 	
 	def set_setpoint(self, w):
 		""" Set setpoint 'w'. """
-		self.com.flush()
+		
 		self.__write("sv", w)
-
-	def set_initial(self, mode, value):
-		""" Set initial mode and value. """
-		self.com.flush()
-		self.__write("si", mode, value)
 
 	def set_output(self, y):
 		""" Set output value 'y' manually. """
-		self.com.flush()
+		
 		self.__write("sy", y)
 
 	def auto(self):
 		""" Set to automatic mode. """
-		self.com.flush()
+		
 		self.__write("a")
 
 	def manual(self):
 		""" Set to manual mode. """
-		self.com.flush()
+		
 		self.__write("m")
 
 	def stop(self):
 		""" Stop controller. """
-		self.com.flush()
+		
 		self.__write("o")
-	
-	def reset(self):
-		""" Reset PID algorithm variables. """
-		self.com.flush()
-		self.__write("r")
 	
 	def save(self):
 		""" Save device configuration to EEPROM. """
-		self.com.flush()
+		
 		self.__write("e")
 
 
@@ -256,6 +240,8 @@ class tinyPID (object):
 			return self.get_pv()
 		elif name == "y":
 			return self.get_output()
+		elif name == "e":
+			return self.w-self.x
 		else:
 			object.__getattr__(self, name)
 

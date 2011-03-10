@@ -214,6 +214,19 @@ void command_loop(char c)
 				softuart_putchar((uint8_t) (piddata.D_factor >> 8));
 				softuart_putchar((uint8_t) (piddata.D_factor & 0xFF));
 			}
+			// debugging
+			else if (testchar('e', c)) {
+				if (piddata.esum < 0) {
+				softuart_putchar('-');
+				softuart_putchar((uint8_t) ((-piddata.esum)>> 8));
+				softuart_putchar((uint8_t) ((-piddata.esum) & 0xFF));
+				}
+				else {
+				softuart_putchar('-');
+				softuart_putchar((uint8_t) ((piddata.esum)>> 8));
+				softuart_putchar((uint8_t) ((piddata.esum) & 0xFF));
+				}
+			}
 		break;
 		
 		default: 

@@ -87,15 +87,12 @@ int32_t pid_contr()
 
     e = piddata.setpoint - piddata.processvalue;
 
-    if (e > MAX_ERROR)
-        e = MAX_ERROR;
-    else if (e < -MAX_ERROR)
-        e = -MAX_ERROR;
-
     if ((piddata.esum + e) > MAX_ERROR_SUM) 
         piddata.esum = MAX_ERROR_SUM;
     else if ((piddata.esum + e) < -MAX_ERROR_SUM)
         piddata.esum = -MAX_ERROR_SUM;
+	else
+		piddata.esum += e;
     
     // limiting of terms could be included here.
     // calculate P-term
