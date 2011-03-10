@@ -3,15 +3,20 @@
 #include <avr/eeprom.h>
 #include "pid.h"
 
+uint8_t  eeSetpoint EEMEM = 0;
+uint8_t  eeOpmode EEMEM = MANUAL;
 uint16_t eeP_factor EEMEM = 0;
 uint16_t eeI_factor EEMEM = 0;
 uint16_t eeD_factor EEMEM = 0;
-uint8_t eeSetpoint EEMEM = 0;
-uint8_t eeOpmode EEMEM = MANUAL;
-
-struct PID_DATA piddata = {0,0,0,0,MANUAL,0,0,0};
 
 uint8_t sampleflag = 0;
+uint8_t last_pv    = 0;
+int32_t pterm      = 0;
+int32_t iterm      = 0;
+int32_t dterm      = 0;
+int16_t esum       = 0;
+
+struct PID_DATA piddata = {0,0,0,0,MANUAL,0};
 
 ISR(WDT_vect)
 {
@@ -59,7 +64,7 @@ void init_pid()
 
 void pid_run()
 {
-    piddata.last_pv = piddata.processvalue;
+    last_pv = piddata.processvalue;
     piddata.processvalue = pid_read_pv();
 
     if (piddata.opmode == AUTO)
@@ -68,33 +73,32 @@ void pid_run()
 
 void pid_reset() 
 {
-    piddata.esum = 0;
-    piddata.last_pv = 0;
+    esum = 0;
+    last_pv = 0;
     piddata.processvalue = 0;
 }
 
 void pid_contr()
 {
     int16_t e;
-    int32_t pterm, iterm, dterm;
 	int64_t u;
 
     e = piddata.setpoint - piddata.processvalue;
-	piddata.esum += e;
+	esum += e;
 
-    if (piddata.esum > MAX_ERROR_SUM) 
-        piddata.esum = MAX_ERROR_SUM;
-    else if (piddata.esum < -MAX_ERROR_SUM)
-        piddata.esum = -MAX_ERROR_SUM;
+    if (esum > MAX_ERROR_SUM) 
+        esum = MAX_ERROR_SUM;
+    else if (esum < -MAX_ERROR_SUM)
+        esum = -MAX_ERROR_SUM;
     
     // limiting of terms could be included here.
     // calculate P-term
     pterm = piddata.P_factor * e;
     // calculate I-term
-    iterm = piddata.I_factor * piddata.esum;
+    iterm = piddata.I_factor * esum;
     // calculate D-term
     // for more robustness, base D-term to change in process value only (ref.: AVR221)
-    dterm = piddata.D_factor * (piddata.processvalue - piddata.last_pv);
+    dterm = piddata.D_factor * (piddata.processvalue - last_pv);
     
     u = (pterm + iterm + dterm) / SCALING_FACTOR;
     
@@ -103,7 +107,7 @@ void pid_contr()
 
 void pid_set_output(int32_t y)
 {
-    if (y > MAX_OUTPUT)
+    if (y > MAX_OUTPUT) 
         PWM = MAX_OUTPUT;
     else if (y < MIN_OUTPUT)
         PWM = MIN_OUTPUT;

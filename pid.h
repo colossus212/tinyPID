@@ -28,14 +28,8 @@ struct PID_DATA {
     uint8_t setpoint;
     uint8_t opmode;
     uint8_t processvalue;
-    uint8_t last_pv;
-    int16_t esum;
 };
 
-struct PID_FLAGS {
-    uint8_t timer :1;
-    uint8_t dummy :7;
-};
 
 void init_periph();
 void init_pid();

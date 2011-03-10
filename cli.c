@@ -50,6 +50,8 @@
 #include "pid.h"
 
 extern struct PID_DATA piddata;
+extern int32_t pterm, iterm, dterm;
+extern int16_t esum;
 
 enum states {
 	init, 
@@ -72,6 +74,12 @@ enum states {
 uint8_t testchar(char expected, char received)
 {
 	return (expected == received || expected == (received - 128));
+}
+
+void put_word(uint16_t word)
+{
+	softuart_putchar((uint8_t) (word >> 8));
+	softuart_putchar((uint8_t) (word & 0xFF));
 }
 
 void init_cli()
@@ -187,44 +195,58 @@ void command_loop(char c)
 
 				if (testchar('v', c)) 
 					softuart_putchar(piddata.setpoint);
-				else if (testchar('x', c)) {
+				else if (testchar('x', c))
 					softuart_putchar(piddata.processvalue);
-				}
 				else if (testchar('y', c)) 
 					softuart_putchar(pid_get_output());
 				else if (testchar('m', c))
 					softuart_putchar(piddata.opmode);
+				
+				// Debug information
+				else if (testchar('d', c)) {
+					if (esum < 0)
+						put_word(-esum);
+					else
+						put_word(esum);
+					
+					if (pterm < 0) {
+						put_word((uint16_t) (-pterm >> 16));
+						put_word((uint16_t) (-pterm & 0xFFFF));
+					}
+					else {
+						put_word((uint16_t) (pterm >> 16));
+						put_word((uint16_t) (pterm & 0xFFFF));
+					}
+					if (iterm < 0) {
+						put_word((uint16_t) (-iterm >> 16));
+						put_word((uint16_t) (-iterm & 0xFFFF));
+					}
+					else {
+						put_word((uint16_t) (iterm >> 16));
+						put_word((uint16_t) (iterm & 0xFFFF));
+					}
+					if (dterm < 0) {
+						put_word((uint16_t) (-dterm >> 16));
+						put_word((uint16_t) (-dterm & 0xFFFF));
+					}
+					else {
+						put_word((uint16_t) (dterm >> 16));
+						put_word((uint16_t) (dterm & 0xFFFF));
+					}
+					
+				}
 			}
 		break;
 		
 		case gp:
 			state_reset();
 			
-			if (testchar('p', c)) {
-				softuart_putchar((uint8_t) (piddata.P_factor >> 8));
-				softuart_putchar((uint8_t) (piddata.P_factor & 0xFF));
-			}
-			else if (testchar('i', c)) {
-				softuart_putchar((uint8_t) (piddata.I_factor >> 8));
-				softuart_putchar((uint8_t) (piddata.I_factor & 0xFF));
-			}
-			else if (testchar('d', c)) {
-				softuart_putchar((uint8_t) (piddata.D_factor >> 8));
-				softuart_putchar((uint8_t) (piddata.D_factor & 0xFF));
-			}
-			// debugging
-			else if (testchar('e', c)) {
-				if (piddata.esum < 0) {
-				softuart_putchar('-');
-				softuart_putchar((uint8_t) ((-piddata.esum)>> 8));
-				softuart_putchar((uint8_t) ((-piddata.esum) & 0xFF));
-				}
-				else {
-				softuart_putchar('-');
-				softuart_putchar((uint8_t) ((piddata.esum)>> 8));
-				softuart_putchar((uint8_t) ((piddata.esum) & 0xFF));
-				}
-			}
+			if (testchar('p', c)) 
+				put_word(piddata.P_factor);
+			else if (testchar('i', c))
+				put_word(piddata.I_factor);
+			else if (testchar('d', c))
+				put_word(piddata.D_factor);
 		break;
 		
 		default: 
