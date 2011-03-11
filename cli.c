@@ -3,42 +3,37 @@
  *
  * Command-line interface (sort of) for tinyPID.
  *
- * The format is kind of raw, each incoming byte is interpreted and should
- * should have a meaning.
- * Arguments to commands have a range of 0…255 and are sent as raw bytes too.
+ * The format is kind of raw, numbers don't get converted to ASCII.
+ * Arguments to commands have a range of 0…255 and are sent as raw bytes.
  * The commands itself can be intrepreted as ASCII characters. No line-ending 
- * is needed. A command is terminated when all of its arguments have been read.
+ * is needed. A command is executed when all of its arguments have been read.
  *
  * In the following table, X is any byte, M is most-significant, L - least significant byte
  *
- * ASCII         HEX          DESCRIPTION
- * a             61           set mode to automatic
- * m             6D           set mode to manual
- * o             6F           set mode to off, no output
- *
- * r             72           reset algorithm
+ * ASCII  DESCRIPTION
+ * a      set mode to automatic
+ * m      set mode to manual
  * 
- * e             65           save configuration to EEPROM
+ * e      save configuration to EEPROM
  * 
- * svX           73 76  X     set the setpoint to X
- * syX           73 79  X     set output value to X, this toggles manual mode
- * sppML         73 70 70 M L set the parameter P_factor
- * spiML         73 70 69 M L set I_factor
- * spdML         73 70 64 M L set D_factor
- * siaX          73 69 61 X   set initial mode (after power-up) to automatic, 
- *                             initial setpoint to X
- * simX          73 69 6D X   set initial mode to manual,
- *                             initial output to X
- *
- * gpp           67 70 70     get parameter P_factor, returns MSB, LSB
- * gpi           67 70 69     get parameter I_factor, returns MSB, LSB
- * gpd           67 70 64     get parameter D_factor, returns MSB, LSB
- * gm            67 6D        get operation mode, returns 'a', 'm' or 'o'
- * gi            67 69        get initial mode and value, in that order
- * gv            67 76        get setpoint
- * gx            67 76        get process value
- * gy            67 76        get output value
- *
+ * 
+ * svX    set the setpoint to X
+ * syX    set output value to X, this toggles manual mode
+ * spML   set the parameter P_factor
+ * siML   set I_factor
+ * sdML   set D_factor
+ * srXXXX set ranges (PVmin, PVmax, OUTmin, OUTmax)
+ * 
+ * gp     get parameter P_factor, returns MSB, LSB
+ * gi     get parameter I_factor, returns MSB, LSB
+ * gd     get parameter D_factor, returns MSB, LSB
+ * gm     get operation mode, returns 'a', 'm' or 'o'
+ * gv     get setpoint
+ * gx     get process value
+ * gy     get output value
+ * gc     get calculation constants SAMPLING_TIME (in ms) and SCALING_FACTOR
+ * gr     get ranges (process value min/max, output min/max)
+ * 
  */
 
 
