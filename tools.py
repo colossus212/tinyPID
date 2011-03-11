@@ -1,4 +1,4 @@
-from time import time
+from time import time, sleep
 from tinyPID import *
 
 def flush(pid):
@@ -48,3 +48,15 @@ def stepresponse(pid, y0=0, y1=255, count=1000):
 		y.append(pid.y)
 	
 	return(t, x, y)
+	
+def log(pid, interval=1):
+	try:
+		while True:
+			w, x, y = pid.w, pid.x, pid.y
+			e = w - x
+			print "w: %3i, x: %3i, e: %3i, y: %3i" % (w, x, e, y)
+			sleep(interval)
+		
+	except KeyboardInterrupt:
+		return
+		
