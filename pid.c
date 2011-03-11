@@ -186,7 +186,7 @@ uint8_t pid_read_pv()
 
 		a += ADCW;
 	}
-	a /= 4;
-	a  = a>>2; 
+	a = a >> 2; // devide by 4 to get mean
+	a = a >> 2; // get 8bit result
     return (uint8_t) a;
 }
