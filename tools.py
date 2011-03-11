@@ -21,11 +21,15 @@ def debug(pid):
 	iterm = sign(isign, dword(e[9], e[10], e[11], e[12]))
 	dterm = sign(dsign, dword(e[14], e[15], e[16], e[17]))
 
-	print "error: %i, pv: %i, sp: %i, output: %i" % (pid.e, pid.x, pid.w, pid.y)
-	print "esum:", esum
-	print "pterm: %i (unscaled: %i)" % (pterm, pterm/SCALING_FACTOR)
-	print "iterm: %i (unscaled: %i)" % (iterm, iterm/SCALING_FACTOR)
-	print "dterm: %i (unscaled: %i)" % (dterm, dterm/SCALING_FACTOR)
+	print "w: %3i x: %3i e: %3i y: %3i" % (pid.w, pid.x, pid.e, pid.y)
+	print "---------------------------"
+	print " esum: %4i" % esum
+	print "pterm: %4i (unscaled: %3i)" % (pterm, pterm/SCALING_FACTOR)
+	print "iterm: %4i (unscaled: %3i)" % (iterm, iterm/SCALING_FACTOR)
+	print "dterm: %4i (unscaled: %3i)" % (dterm, dterm/SCALING_FACTOR)
+	print "---------------------------"
+	print pid.opmode == 'm' and 'Manual mode.' or 'Auto mode.'
+
 
 
 def stepresponse(pid, y0=0, y1=255, count=1000):

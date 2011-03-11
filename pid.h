@@ -31,13 +31,18 @@ typedef struct {
     uint8_t opmode;
     uint8_t processvalue;
 	
-	uint8_t last_pv;
+} piddata_t;
 
+typedef struct {
 	int32_t pterm;
 	int32_t iterm;
 	int32_t dterm;
-	int16_t  esum;
-} piddata_t;
+	
+	uint8_t last_pv;
+	int16_t esum;
+	int16_t e;
+	
+} pidcalc_t;
 
 void init_periph();
 void init_pid();

@@ -11,7 +11,8 @@ uint16_t eeP_factor EEMEM;
 uint16_t eeI_factor EEMEM;
 uint16_t eeD_factor EEMEM;
 
-piddata_t piddata = {0,0,0,0,MANUAL,0,0,0,0,0,0};
+piddata_t piddata = {0,0,0,0,MANUAL,0};
+pidcalc_t pidcalc = {0,0,0,0,0,0};
 
 ISR(WDT_vect)
 {
@@ -59,7 +60,7 @@ void init_pid()
 
 void pid_run()
 {
-    piddata.last_pv = piddata.processvalue;
+    pidcalc.last_pv = piddata.processvalue;
     piddata.processvalue = pid_read_pv();
 
     if (sampleflag == 1 && piddata.opmode == AUTO) {
@@ -82,11 +83,11 @@ void pid_manual()
 
 void pid_reset() 
 {
-    piddata.esum = 0;
-	piddata.pterm = 0;
-	piddata.iterm = 0;
-	piddata.dterm = 0;
-	piddata.last_pv = 0;
+    pidcalc.esum = 0;
+	pidcalc.pterm = 0;
+	pidcalc.iterm = 0;
+	pidcalc.dterm = 0;
+	pidcalc.last_pv = 0;
     piddata.processvalue = 0;
 }
 
@@ -114,38 +115,38 @@ void pid_contr()
 	int64_t u;
 
     e = piddata.setpoint - piddata.processvalue;
-	piddata.esum += e;
+	pidcalc.esum += e;
 
-    if (piddata.esum > MAX_ERROR_SUM) 
-        piddata.esum = MAX_ERROR_SUM;
-    else if (piddata.esum < -MAX_ERROR_SUM)
-        piddata.esum = -MAX_ERROR_SUM;
+    if (pidcalc.esum > MAX_ERROR_SUM) 
+        pidcalc.esum = MAX_ERROR_SUM;
+    else if (pidcalc.esum < -MAX_ERROR_SUM)
+        pidcalc.esum = -MAX_ERROR_SUM;
 	
 	// multiplying 32-bit integers with negatives doesn't work well,
 	// so there is this little workaround:
 	if (e >= 0)
-		piddata.pterm = piddata.P_factor * e;
+		pidcalc.pterm = piddata.P_factor * e;
 	else {
-		piddata.pterm = piddata.P_factor * -e;
-		piddata.pterm = -piddata.pterm;
+		pidcalc.pterm = piddata.P_factor * -e;
+		pidcalc.pterm = -pidcalc.pterm;
 	}
 
-	if (piddata.esum >= 0)
-		piddata.iterm = piddata.I_factor * piddata.esum;
+	if (pidcalc.esum >= 0)
+		pidcalc.iterm = piddata.I_factor * pidcalc.esum;
 	else {
-		piddata.iterm = piddata.I_factor * -piddata.esum;
-		piddata.iterm = -piddata.iterm;
+		pidcalc.iterm = piddata.I_factor * -pidcalc.esum;
+		pidcalc.iterm = -pidcalc.iterm;
 	}
 
     // for more robustness, base D-term to change in process value only (ref.: AVR221)
-    if (piddata.processvalue >= piddata.last_pv)
-		piddata.dterm = piddata.D_factor * (piddata.processvalue - piddata.last_pv);
+    if (piddata.processvalue >= pidcalc.last_pv)
+		pidcalc.dterm = piddata.D_factor * (piddata.processvalue - pidcalc.last_pv);
 	else {
-		piddata.dterm = piddata.D_factor * (piddata.last_pv - piddata.processvalue);
-		piddata.dterm = -piddata.dterm;
+		pidcalc.dterm = piddata.D_factor * (pidcalc.last_pv - piddata.processvalue);
+		pidcalc.dterm = -pidcalc.dterm;
 	}
     
-    u = (piddata.pterm + piddata.iterm + piddata.dterm) / SCALING_FACTOR;
+    u = (pidcalc.pterm + pidcalc.iterm + pidcalc.dterm) / SCALING_FACTOR;
     
     pid_set_output( (int32_t) u);
 }

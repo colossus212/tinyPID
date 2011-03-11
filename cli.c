@@ -50,6 +50,7 @@
 #include "pid.h"
 
 extern piddata_t piddata;
+extern pidcalc_t pidcalc;
 
 enum states {
 	init, 
@@ -203,44 +204,44 @@ void command_loop(char c)
 				// Debug information
 				else if (testchar('d', c)) {
 				
-					if (piddata.esum < 0) {
+					if (pidcalc.esum < 0) {
 						softuart_putchar(1);
-						put_word(-piddata.esum);
+						put_word(-pidcalc.esum);
 					}
 					else {
 						softuart_putchar(0);
-						put_word(piddata.esum);
+						put_word(pidcalc.esum);
 					}
 					
-					if (piddata.pterm < 0) {
+					if (pidcalc.pterm < 0) {
 						softuart_putchar(1);
-						put_word((uint16_t) (-piddata.pterm >> 16));
-						put_word((uint16_t) (-piddata.pterm & 0xFFFF));
+						put_word((uint16_t) (-pidcalc.pterm >> 16));
+						put_word((uint16_t) (-pidcalc.pterm & 0xFFFF));
 					}
 					else {
 						softuart_putchar(0);
-						put_word((uint16_t) (piddata.pterm >> 16));
-						put_word((uint16_t) (piddata.pterm & 0xFFFF));
+						put_word((uint16_t) (pidcalc.pterm >> 16));
+						put_word((uint16_t) (pidcalc.pterm & 0xFFFF));
 					}
-					if (piddata.iterm < 0) {
+					if (pidcalc.iterm < 0) {
 						softuart_putchar(1);
-						put_word((uint16_t) (-piddata.iterm >> 16));
-						put_word((uint16_t) (-piddata.iterm & 0xFFFF));
+						put_word((uint16_t) (-pidcalc.iterm >> 16));
+						put_word((uint16_t) (-pidcalc.iterm & 0xFFFF));
 					}
 					else {
 						softuart_putchar(0);
-						put_word((uint16_t) (piddata.iterm >> 16));
-						put_word((uint16_t) (piddata.iterm & 0xFFFF));
+						put_word((uint16_t) (pidcalc.iterm >> 16));
+						put_word((uint16_t) (pidcalc.iterm & 0xFFFF));
 					}
-					if (piddata.dterm < 0) {
+					if (pidcalc.dterm < 0) {
 						softuart_putchar(1);
-						put_word((uint16_t) (-piddata.dterm >> 16));
-						put_word((uint16_t) (-piddata.dterm & 0xFFFF));
+						put_word((uint16_t) (-pidcalc.dterm >> 16));
+						put_word((uint16_t) (-pidcalc.dterm & 0xFFFF));
 					}
 					else {
 						softuart_putchar(0);
-						put_word((uint16_t) (piddata.dterm >> 16));
-						put_word((uint16_t) (piddata.dterm & 0xFFFF));
+						put_word((uint16_t) (pidcalc.dterm >> 16));
+						put_word((uint16_t) (pidcalc.dterm & 0xFFFF));
 					}
 					
 				}
