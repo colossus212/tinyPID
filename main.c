@@ -46,8 +46,6 @@
 #include "cli.h"
 #include "softuart.h"
 
-extern uint8_t sampleflag;
-
 int main()
 {
 	char c;
@@ -61,12 +59,8 @@ int main()
 			c = softuart_getchar();
 			command_loop(c);
 		}
-        
-        if (sampleflag == 1) {
-			sampleflag = 0;
-// 			pid_set_output(-320);
-			pid_run();
-        }
+		
+		pid_run();        
     }
     
     return 0;

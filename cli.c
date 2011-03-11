@@ -52,6 +52,7 @@
 extern struct PID_DATA piddata;
 extern int32_t pterm, iterm, dterm;
 extern int16_t esum;
+extern uint8_t yflag;
 
 enum states {
 	init, 
@@ -204,32 +205,44 @@ void command_loop(char c)
 				
 				// Debug information
 				else if (testchar('d', c)) {
-					if (esum < 0)
+					softuart_putchar(yflag);
+					
+					if (esum < 0) {
+						softuart_putchar(1);
 						put_word(-esum);
-					else
+					}
+					else {
+						softuart_putchar(0);
 						put_word(esum);
+					}
 					
 					if (pterm < 0) {
+						softuart_putchar(1);
 						put_word((uint16_t) (-pterm >> 16));
 						put_word((uint16_t) (-pterm & 0xFFFF));
 					}
 					else {
+						softuart_putchar(0);
 						put_word((uint16_t) (pterm >> 16));
 						put_word((uint16_t) (pterm & 0xFFFF));
 					}
 					if (iterm < 0) {
+						softuart_putchar(1);
 						put_word((uint16_t) (-iterm >> 16));
 						put_word((uint16_t) (-iterm & 0xFFFF));
 					}
 					else {
+						softuart_putchar(0);
 						put_word((uint16_t) (iterm >> 16));
 						put_word((uint16_t) (iterm & 0xFFFF));
 					}
 					if (dterm < 0) {
+						softuart_putchar(1);
 						put_word((uint16_t) (-dterm >> 16));
 						put_word((uint16_t) (-dterm & 0xFFFF));
 					}
 					else {
+						softuart_putchar(0);
 						put_word((uint16_t) (dterm >> 16));
 						put_word((uint16_t) (dterm & 0xFFFF));
 					}

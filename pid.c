@@ -9,12 +9,15 @@ uint16_t eeP_factor EEMEM = 0;
 uint16_t eeI_factor EEMEM = 0;
 uint16_t eeD_factor EEMEM = 0;
 
-uint8_t sampleflag = 0;
-uint8_t last_pv    = 0;
-int32_t pterm      = 0;
-int32_t iterm      = 0;
-int32_t dterm      = 0;
-int16_t esum       = 0;
+volatile uint8_t sampleflag = 0;
+
+uint8_t   yflag = 0;
+uint8_t last_pv = 0;
+
+int32_t pterm = 0;
+int32_t iterm = 0;
+int32_t dterm = 0;
+int16_t  esum = 0;
 
 struct PID_DATA piddata = {0,0,0,0,MANUAL,0};
 
@@ -67,14 +70,19 @@ void pid_run()
     last_pv = piddata.processvalue;
     piddata.processvalue = pid_read_pv();
 
-    if (piddata.opmode == AUTO)
+    if (sampleflag == 1 && piddata.opmode == AUTO) {
+		sampleflag = 0;
         pid_contr();
+	}
 }
 
 void pid_reset() 
 {
     esum = 0;
-    last_pv = 0;
+	pterm = 0;
+	iterm = 0;
+	dterm = 0;
+	last_pv = 0;
     piddata.processvalue = 0;
 }
 
@@ -90,15 +98,30 @@ void pid_contr()
         esum = MAX_ERROR_SUM;
     else if (esum < -MAX_ERROR_SUM)
         esum = -MAX_ERROR_SUM;
-    
-    // limiting of terms could be included here.
-    // calculate P-term
-    pterm = piddata.P_factor * e;
-    // calculate I-term
-    iterm = piddata.I_factor * esum;
-    // calculate D-term
+	
+	// multiplying 32-bit integers with negatives doesn't work well,
+	// so there is this little workaround:
+	if (e >= 0)
+		pterm = piddata.P_factor * e;
+	else {
+		pterm = piddata.P_factor * -e;
+		pterm = -pterm;
+	}
+
+	if (esum >= 0)
+		iterm = piddata.I_factor * esum;
+	else {
+		iterm = piddata.I_factor * -esum;
+		iterm = -iterm;
+	}
+
     // for more robustness, base D-term to change in process value only (ref.: AVR221)
-    dterm = piddata.D_factor * (piddata.processvalue - last_pv);
+    if (piddata.processvalue >= last_pv)
+		dterm = piddata.D_factor * (piddata.processvalue - last_pv);
+	else {
+		dterm = piddata.D_factor * (last_pv - piddata.processvalue);
+		dterm = -dterm;
+	}
     
     u = (pterm + iterm + dterm) / SCALING_FACTOR;
     
@@ -107,12 +130,18 @@ void pid_contr()
 
 void pid_set_output(int32_t y)
 {
-    if (y > MAX_OUTPUT) 
+    if (y > MAX_OUTPUT) {
+		yflag = 2;
         PWM = MAX_OUTPUT;
-    else if (y < MIN_OUTPUT)
+	}
+    else if (y < MIN_OUTPUT) {
+		yflag = 0;
         PWM = MIN_OUTPUT;
-    else
+	}
+    else {
+		yflag = 1;
         PWM = (uint8_t) y;
+	}
 }
 
 uint8_t pid_get_output()
