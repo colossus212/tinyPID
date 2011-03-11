@@ -39,7 +39,7 @@ def step(pid, y, count):
 	x = []
 	y = []
 	t = []
-	t0 = time.time()
+	t0 = time()
 	pid.y = y
 	for i in range(count):
 		x[i] = pid.x
