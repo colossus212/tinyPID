@@ -30,6 +30,13 @@ typedef struct {
     uint8_t setpoint;
     uint8_t opmode;
     uint8_t processvalue;
+	
+	uint8_t last_pv;
+
+	int32_t pterm;
+	int32_t iterm;
+	int32_t dterm;
+	int16_t  esum;
 } piddata_t;
 
 void init_periph();
