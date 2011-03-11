@@ -49,10 +49,9 @@
 #include "softuart.h"
 #include "pid.h"
 
-extern struct PID_DATA piddata;
+extern piddata_t piddata;
 extern int32_t pterm, iterm, dterm;
 extern int16_t esum;
-extern uint8_t yflag;
 
 enum states {
 	init, 
@@ -205,8 +204,7 @@ void command_loop(char c)
 				
 				// Debug information
 				else if (testchar('d', c)) {
-					softuart_putchar(yflag);
-					
+				
 					if (esum < 0) {
 						softuart_putchar(1);
 						put_word(-esum);

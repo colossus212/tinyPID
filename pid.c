@@ -11,7 +11,6 @@ uint16_t eeD_factor EEMEM = 0;
 
 volatile uint8_t sampleflag = 0;
 
-uint8_t   yflag = 0;
 uint8_t last_pv = 0;
 
 int32_t pterm = 0;
@@ -19,7 +18,7 @@ int32_t iterm = 0;
 int32_t dterm = 0;
 int16_t  esum = 0;
 
-struct PID_DATA piddata = {0,0,0,0,MANUAL,0};
+piddata_t piddata = {0,0,0,0,MANUAL,0};
 
 ISR(WDT_vect)
 {
@@ -76,6 +75,18 @@ void pid_run()
 	}
 }
 
+void pid_auto()
+{
+	pid_reset();
+	piddata.opmode = AUTO;
+}
+
+void pid_manual()
+{
+	pid_reset();
+	piddata.opmode = MANUAL;
+}
+
 void pid_reset() 
 {
     esum = 0;
@@ -84,6 +95,24 @@ void pid_reset()
 	dterm = 0;
 	last_pv = 0;
     piddata.processvalue = 0;
+}
+
+void pid_save_parameters()
+{
+    eeprom_write_word(&eeP_factor, piddata.P_factor);
+    eeprom_write_word(&eeI_factor, piddata.I_factor);
+    eeprom_write_word(&eeD_factor, piddata.D_factor);
+    eeprom_write_byte(&eeSetpoint, piddata.setpoint);
+    eeprom_write_byte(&eeOpmode,   piddata.opmode);
+}
+
+void pid_load_parameters()
+{
+    piddata.P_factor = eeprom_read_word(&eeP_factor);
+    piddata.I_factor = eeprom_read_word(&eeI_factor);
+    piddata.D_factor = eeprom_read_word(&eeD_factor);
+    piddata.opmode   = eeprom_read_byte(&eeOpmode);
+    piddata.setpoint = eeprom_read_byte(&eeSetpoint);
 }
 
 void pid_contr()
@@ -130,18 +159,12 @@ void pid_contr()
 
 void pid_set_output(int32_t y)
 {
-    if (y > MAX_OUTPUT) {
-		yflag = 2;
+    if (y > MAX_OUTPUT) 
         PWM = MAX_OUTPUT;
-	}
-    else if (y < MIN_OUTPUT) {
-		yflag = 0;
+    else if (y < MIN_OUTPUT)
         PWM = MIN_OUTPUT;
-	}
-    else {
-		yflag = 1;
+    else 
         PWM = (uint8_t) y;
-	}
 }
 
 uint8_t pid_get_output()
@@ -166,34 +189,4 @@ uint8_t pid_read_pv()
 	a /= 4;
 	a  = a>>2; 
     return (uint8_t) a;
-}
-
-void pid_auto()
-{
-	pid_reset();
-	piddata.opmode = AUTO;
-}
-
-void pid_manual()
-{
-	pid_reset();
-	piddata.opmode = MANUAL;
-}
-
-void pid_save_parameters()
-{
-    eeprom_write_word(&eeP_factor, piddata.P_factor);
-    eeprom_write_word(&eeI_factor, piddata.I_factor);
-    eeprom_write_word(&eeD_factor, piddata.D_factor);
-    eeprom_write_byte(&eeSetpoint, piddata.setpoint);
-    eeprom_write_byte(&eeOpmode,   piddata.opmode);
-}
-
-void pid_load_parameters()
-{
-    piddata.P_factor = eeprom_read_word(&eeP_factor);
-    piddata.I_factor = eeprom_read_word(&eeI_factor);
-    piddata.D_factor = eeprom_read_word(&eeD_factor);
-    piddata.opmode   = eeprom_read_byte(&eeOpmode);
-    piddata.setpoint = eeprom_read_byte(&eeSetpoint);
 }

@@ -11,16 +11,18 @@
 #define PWM OCR1B
 #define ADCHAN 1
 
-// Controller Constants
+// Controller constants
 #define SAMPLING_TIME  16
 #define SCALING_FACTOR 128 
 #define MAX_ERROR_SUM  1000
 #define MAX_OUTPUT     255
 #define MIN_OUTPUT     0
 
-enum modes {AUTO='a', MANUAL='m'};
+// Operation modes 
+#define AUTO   'a'
+#define MANUAL 'm'
 
-struct PID_DATA {
+typedef struct {
     uint16_t P_factor;
     uint16_t I_factor;
     uint16_t D_factor;
@@ -28,24 +30,23 @@ struct PID_DATA {
     uint8_t setpoint;
     uint8_t opmode;
     uint8_t processvalue;
-};
-
+} piddata_t;
 
 void init_periph();
 void init_pid();
 
-void pid_reset( );
-void pid_run( );
-void pid_contr( );
+void pid_run();
+void pid_contr();
 
 uint8_t pid_read_pv();
 void pid_set_output(int32_t y);
 uint8_t pid_get_output();
 
+void pid_reset();
 void pid_manual();
 void pid_auto();
 
-void pid_save_parameters( );
-void pid_load_parameters( );
+void pid_save_parameters();
+void pid_load_parameters();
 
 #endif
