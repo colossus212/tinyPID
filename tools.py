@@ -35,15 +35,16 @@ def debug(pid):
 	elif yflag == 0:
 		print "y < MIN_OUTPUT"
 
-def step(pid, y, count):
+def stepresponse(pid, y0=0, y1=255, count=1000):
+	pid.y = y0
 	x = []
 	y = []
 	t = []
 	t0 = time()
-	pid.y = y
+	pid.y = y1
 	for i in range(count):
-		x[i] = pid.x
-		t[i] = time() - t0
-		y[i] = pid.y
+		x.append(pid.x)
+		t.append(time() - t0)
+		y.append(pid.y)
 	
 	return(t, x, y)
