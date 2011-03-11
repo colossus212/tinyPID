@@ -38,29 +38,58 @@ def debug(pid):
 	print pid.opmode == 'm' and 'Manual mode.' or 'Auto mode.'
 
 
+def info(pid):
+	p, i, d = pid.Kp, pid.Ki, pid.Kd
+	v, n = Kd_to_Tv(p, d), Ki_to_Tn(p, i)
+	w, x, y = pid.w, pid.x, pid.y
+	e = w - x
+	m = pid.opmode
+	
+	print "Kp: %2.2f Ki: %2.2f Kd: %2.2f" % (p, i, d)
+	print "Tn: %2.2f Tv: %2.2f" % (n, v)
+	print "w: %i x: %i e: %i y: %i" % (w, x, e, y)
+	print m == 'a' and "automatic" or "manual"
 
-def stepresponse(pid, y0=0, y1=255, count=1000):
+
+def ystepresponse(pid, y0=0, y1=255, count0=500, count1=1000):
 	pid.y = y0
 	x = []
 	y = []
 	t = []
 	t0 = time()
-	pid.y = y1
-	for i in range(count):
+	for i in range(count0+count1):
+		if i == count0:
+			pid.y = y1
 		x.append(pid.x)
 		t.append(time() - t0)
 		y.append(pid.y)
 	
 	return(t, x, y)
 	
+def wstepresponse(pid, w0=0, w1=255, count0=500, count1=1000):
+	pid.auto()
+	pid.w = w0
+	w = []
+	x = []
+	y = []
+	t = []
+	t0 = time()
+	for i in range(count0+count1):
+		if i == count0:
+			pid.w = w1
+		t.append(time() - t0)
+		x.append(pid.x)
+		y.append(pid.y)
+		w.append(pid.w)
+	
+	return(t, x, y, w)
+	
 def log(pid, interval=1):
 	try:
 		while True:
 			w, x, y = pid.w, pid.x, pid.y
 			e = w - x
-			print "w: %3i, x: %3i, e: %3i, y: %3i" % (w, x, e, y)
+			print "w: %3i, x: %3i, y: %3i, e: %3i" % (w, x, y, e)
 			sleep(interval)
-		
 	except KeyboardInterrupt:
 		return
-		
