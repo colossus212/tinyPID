@@ -1,3 +1,4 @@
 * dokumentiere P_factor, etc in regleralgorithmus!
 * kommandosatz überdenken, kommandos minimieren
-* pid algo nach overflows und maximalwerte überprüfen
+* pid.c bereinigen und struktur verfeinern (globale variablen etc.)
+* cli komplett aufräumen
