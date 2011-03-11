@@ -24,7 +24,7 @@ struct PID_DATA piddata = {0,0,0,0,MANUAL,0};
 ISR(WDT_vect)
 {
 	// keep WDT from resetting, interrupt instead
-	WDTCR |= (1 << WDIE);
+	WDTCR |= _BV(WDIE);
     sampleflag = 1;
 }
 
@@ -158,13 +158,13 @@ uint8_t pid_read_pv()
 	
 	// read ADC, take 4 samples
 	for (i=0; i < 4; i++) {
-		ADCSRA |= (1 << ADSC);         // start conversion
-		while (ADCSRA & (1 << ADSC));  // wait till end of conversion
+		ADCSRA |= _BV(ADSC);         // start conversion
+		while (ADCSRA & _BV(ADSC));  // wait till end of conversion
 
 		a += ADCW;
 	}
 	a /= 4;
-	a  = a>>2;
+	a  = a>>2; 
     return (uint8_t) a;
 }
 
