@@ -11,8 +11,10 @@ uint16_t eeP_factor EEMEM;
 uint16_t eeI_factor EEMEM;
 uint16_t eeD_factor EEMEM;
 
-piddata_t piddata = {0,0,0,0,MANUAL,0};
-pidcalc_t pidcalc = {0,0,0,0,0,0};
+piddata_t piddata = {0,0,0,0,MANUAL,0,0,0};
+#ifdef PID_DEBUG
+piddebug_t piddebug = {0,0,0,0};
+#endif
 
 ISR(WDT_vect)
 {
@@ -60,7 +62,7 @@ void init_pid()
 
 void pid_run()
 {
-    pidcalc.last_pv = piddata.processvalue;
+    piddata.last_pv = piddata.processvalue;
     piddata.processvalue = pid_read_pv();
 
     if (sampleflag == 1 && piddata.opmode == AUTO) {
@@ -83,12 +85,13 @@ void pid_manual()
 
 void pid_reset() 
 {
-    pidcalc.esum = 0;
-	pidcalc.pterm = 0;
-	pidcalc.iterm = 0;
-	pidcalc.dterm = 0;
-	pidcalc.last_pv = 0;
+    piddata.esum = 0;
+	piddata.last_pv = 0;
     piddata.processvalue = 0;
+#ifdef PID_DEBUG
+	piddebug.pterm = piddebug.iterm = piddebug.dterm = 0;
+	piddebug.e = 0;
+#endif
 }
 
 void pid_save_parameters()
@@ -111,44 +114,52 @@ void pid_load_parameters()
 
 void pid_contr()
 {
-    int16_t e;
+	int16_t e;
+	int32_t pterm, iterm, dterm;
 	int64_t u;
 
     e = piddata.setpoint - piddata.processvalue;
-	pidcalc.esum += e;
+	piddata.esum += e;
 
-    if (pidcalc.esum > MAX_ERROR_SUM) 
-        pidcalc.esum = MAX_ERROR_SUM;
-    else if (pidcalc.esum < -MAX_ERROR_SUM)
-        pidcalc.esum = -MAX_ERROR_SUM;
+    if (piddata.esum > MAX_ERROR_SUM) 
+        piddata.esum = MAX_ERROR_SUM;
+    else if (piddata.esum < -MAX_ERROR_SUM)
+        piddata.esum = -MAX_ERROR_SUM;
 	
 	// multiplying 32-bit integers with negatives doesn't work well,
 	// so there is this little workaround:
 	if (e >= 0)
-		pidcalc.pterm = piddata.P_factor * e;
+		pterm = piddata.P_factor * e;
 	else {
-		pidcalc.pterm = piddata.P_factor * -e;
-		pidcalc.pterm = -pidcalc.pterm;
+		pterm = piddata.P_factor * -e;
+		pterm = -pterm;
 	}
 
-	if (pidcalc.esum >= 0)
-		pidcalc.iterm = piddata.I_factor * pidcalc.esum;
+	if (piddata.esum >= 0)
+		iterm = piddata.I_factor * piddata.esum;
 	else {
-		pidcalc.iterm = piddata.I_factor * -pidcalc.esum;
-		pidcalc.iterm = -pidcalc.iterm;
+		iterm = piddata.I_factor * -piddata.esum;
+		iterm = -iterm;
 	}
 
     // for more robustness, base D-term to change in process value only (ref.: AVR221)
-    if (piddata.processvalue >= pidcalc.last_pv)
-		pidcalc.dterm = piddata.D_factor * (piddata.processvalue - pidcalc.last_pv);
+    if (piddata.processvalue >= piddata.last_pv)
+		dterm = piddata.D_factor * (piddata.processvalue - piddata.last_pv);
 	else {
-		pidcalc.dterm = piddata.D_factor * (pidcalc.last_pv - piddata.processvalue);
-		pidcalc.dterm = -pidcalc.dterm;
+		dterm = piddata.D_factor * (piddata.last_pv - piddata.processvalue);
+		dterm = -dterm;
 	}
     
-    u = (pidcalc.pterm + pidcalc.iterm + pidcalc.dterm) / SCALING_FACTOR;
+    u = (pterm + iterm + dterm) / SCALING_FACTOR;
     
     pid_set_output( (int32_t) u);
+	
+#ifdef PID_DEBUG
+	piddebug.pterm = pterm;
+	piddebug.iterm = iterm;
+	piddebug.dterm = dterm;
+	piddebug.e = e;
+#endif
 }
 
 void pid_set_output(int32_t y)

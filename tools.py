@@ -6,9 +6,15 @@ def flush(pid):
 
 def debug(pid):
 	pid.com.write("gd")
+	
 	e = pid.com.readlines()[0]
 	# receives: sign, 2B esum, pterm-sign, 4B pterm, sign, iterm, sign, dterm
 	# sign is 1 for a following negativ value, otherwise 0
+	
+	if len(e) < 18:
+		print e
+		return
+		
 	e = map(ord, e)
 
 	dword = lambda a,b,c,d: (to_word(a, b)<<16)+to_word(c, d)

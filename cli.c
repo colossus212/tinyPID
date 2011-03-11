@@ -44,13 +44,14 @@
 
 #include <avr/pgmspace.h>
 #include <avr/interrupt.h>
-#include <util/delay.h>
 #include "cli.h"
 #include "softuart.h"
 #include "pid.h"
 
 extern piddata_t piddata;
-extern pidcalc_t pidcalc;
+#ifdef PID_DEBUG
+extern piddebug_t piddebug;
+#endif
 
 enum states {
 	init, 
@@ -203,46 +204,51 @@ void command_loop(char c)
 				
 				// Debug information
 				else if (testchar('d', c)) {
+					
+#ifndef PID_DEBUG
+					softuart_puts_P("No debug.");
+#else
 				
-					if (pidcalc.esum < 0) {
+					if (piddata.esum < 0) {
 						softuart_putchar(1);
-						put_word(-pidcalc.esum);
+						put_word(-piddata.esum);
 					}
 					else {
 						softuart_putchar(0);
-						put_word(pidcalc.esum);
+						put_word(piddata.esum);
 					}
 					
-					if (pidcalc.pterm < 0) {
+					if (piddebug.pterm < 0) {
 						softuart_putchar(1);
-						put_word((uint16_t) (-pidcalc.pterm >> 16));
-						put_word((uint16_t) (-pidcalc.pterm & 0xFFFF));
+						put_word((uint16_t) (-piddebug.pterm >> 16));
+						put_word((uint16_t) (-piddebug.pterm & 0xFFFF));
 					}
 					else {
 						softuart_putchar(0);
-						put_word((uint16_t) (pidcalc.pterm >> 16));
-						put_word((uint16_t) (pidcalc.pterm & 0xFFFF));
+						put_word((uint16_t) (piddebug.pterm >> 16));
+						put_word((uint16_t) (piddebug.pterm & 0xFFFF));
 					}
-					if (pidcalc.iterm < 0) {
+					if (piddebug.iterm < 0) {
 						softuart_putchar(1);
-						put_word((uint16_t) (-pidcalc.iterm >> 16));
-						put_word((uint16_t) (-pidcalc.iterm & 0xFFFF));
+						put_word((uint16_t) (-piddebug.iterm >> 16));
+						put_word((uint16_t) (-piddebug.iterm & 0xFFFF));
 					}
 					else {
 						softuart_putchar(0);
-						put_word((uint16_t) (pidcalc.iterm >> 16));
-						put_word((uint16_t) (pidcalc.iterm & 0xFFFF));
+						put_word((uint16_t) (piddebug.iterm >> 16));
+						put_word((uint16_t) (piddebug.iterm & 0xFFFF));
 					}
-					if (pidcalc.dterm < 0) {
+					if (piddebug.dterm < 0) {
 						softuart_putchar(1);
-						put_word((uint16_t) (-pidcalc.dterm >> 16));
-						put_word((uint16_t) (-pidcalc.dterm & 0xFFFF));
+						put_word((uint16_t) (-piddebug.dterm >> 16));
+						put_word((uint16_t) (-piddebug.dterm & 0xFFFF));
 					}
 					else {
 						softuart_putchar(0);
-						put_word((uint16_t) (pidcalc.dterm >> 16));
-						put_word((uint16_t) (pidcalc.dterm & 0xFFFF));
+						put_word((uint16_t) (piddebug.dterm >> 16));
+						put_word((uint16_t) (piddebug.dterm & 0xFFFF));
 					}
+#endif
 					
 				}
 			}

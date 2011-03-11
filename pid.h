@@ -3,6 +3,8 @@
 
 #include <avr/io.h>
 
+#define PID_DEBUG
+
 // Peripherals
 #define IO_PWM PB4
 #define IO_PIN PINB
@@ -31,18 +33,18 @@ typedef struct {
     uint8_t opmode;
     uint8_t processvalue;
 	
+	uint8_t last_pv;
+	int16_t esum;
 } piddata_t;
 
+#ifdef PID_DEBUG
 typedef struct {
 	int32_t pterm;
 	int32_t iterm;
 	int32_t dterm;
-	
-	uint8_t last_pv;
-	int16_t esum;
 	int16_t e;
-	
-} pidcalc_t;
+} piddebug_t;
+#endif
 
 void init_periph();
 void init_pid();
