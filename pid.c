@@ -38,18 +38,18 @@ void init_periph()
 
     // PWM setup
     // Timer1, does FAST PWM, prescaler = 1
-    TCCR1 =  _BV(CS10); //| _BV(CS11);
+    TCCR1 =  _BV(CS10);
     GTCCR  = _BV(COM1B0) | _BV(PWM1B);
     OCR1C = 0xFF; // TOP
     PWM = 0;
 
     // WDT setup
     // enable watchdog timer, use interrupt instead of reset, every 0.016 seconds
-    WDTCR = (1 << WDE) | (1 << WDIE);
+    WDTCR = _BV(WDE) | _BV(WDIE);
     
     // ADC setup
     // enable ADC, VCC ref., set prescaler to 8
-    ADCSRA = (1 << ADEN) | (1 << ADPS1) | (1 << ADPS0);
+    ADCSRA = _BV(ADEN) | _BV(ADPS1) | _BV(ADPS0);
     // set ADC channel
     ADMUX = ADCHAN;
 
