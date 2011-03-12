@@ -223,11 +223,6 @@ class tinyPID (object):
 		
 		self.__write("m")
 
-	def stop(self):
-		""" Stop controller. """
-		
-		self.__write("o")
-	
 	def save(self):
 		""" Save device configuration to EEPROM. """
 		
