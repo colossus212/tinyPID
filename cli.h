@@ -2,6 +2,6 @@
 #define __CLI_H__
 
 void init_cli();
-void command_loop(char c);
+void command_loop();
 
 #endif

@@ -48,19 +48,6 @@ extern piddata_t piddata;
 extern piddebug_t piddebug;
 #endif
 
-enum states {
-	init, 
-	g, gp, 
-	s, sp, 
-	sy, sv,  
-	si, sim,
-	spp, sppM, 
-	spi, spiM, 
-	spd, spdM,
-};
-
-#define state_reset() (state = init)
-
 /* This is a very dirty workaround to a communication error with softuart.
  * Sometimes, bytes are received in a strange way, adding one most-significant
  * bit to the character. 
@@ -77,190 +64,103 @@ void put_word(uint16_t word)
 	softuart_putchar((uint8_t) (word & 0xFF));
 }
 
+uint16_t get_word()
+{
+	char lsb, msb;
+	
+	msb = softuart_getchar();
+	lsb = softuart_getchar();
+	
+	return (uint16_t) ((msb<<8) + lsb);
+}
+
 void init_cli()
 {
     softuart_init();
     sei();
 }
 
-void command_loop(char c)
+void command_loop()
 {
-	static char msb = 0;
-	static uint8_t state = init;
+	char c;
 	
-	switch (state) {
-		case init:
-			if (testchar('s', c))
-				state = s;
-			else if (testchar('g', c))
-				state = g;
-			else if (testchar('a', c))
-				pid_auto();
-			else if (testchar('m', c))
-				pid_manual();
-			else if (testchar('r', c))
-				pid_reset();
-			else if (testchar('e', c))
-				pid_save_parameters();
-		break;
+	if (softuart_kbhit())
+		c = softuart_getchar();
+	else
+		return;
+	
+	if (testchar('a', c))
+		pid_auto();
+	
+	else if (testchar('m', c))
+		pid_manual();
+	
+	else if (testchar('e', c))
+		pid_save_parameters();
+	
+	else if (testchar('s', c)) {
+		c = softuart_getchar();
 		
-		case s:
-			if (testchar('v', c)) 
-				state = sv;
-			else if (testchar('y', c))
-				state = sy;
-			else if (testchar('p', c))
-				state = sp;
-			else if (testchar('i', c))
-				state = si;
-			else
-				state_reset();
-		break;
+		if (testchar('v', c))
+			piddata.processvalue = softuart_getchar();
 		
-		case sp:
-			if (testchar('p', c))
-				state = spp;
-			else if (testchar('i', c))
-				state = spi;
-			else if (testchar('d', c))
-				state = spd;
-			else
-				state_reset();
-		break;
+		else if (testchar('y', c)) {
+			pid_manual();
+			pid_set_output(softuart_getchar());
+		}
 		
-		case spp:
-			msb = c;
-			state = sppM;
-		break;
+		else if (testchar('p', c)) 
+			piddata.P_factor = get_word();
 		
-		case spi:
-			msb = c;
-			state = spiM;
-		break;
+		else if (testchar('i', c)) 
+			piddata.I_factor = get_word();
 		
-		case spd:
-			msb = c;
-			state = spdM;
-		break;
+		else if (testchar('d', c))
+			piddata.D_factor = get_word();
 		
-		case sppM:
-			state_reset();
-			piddata.P_factor = (msb << 8) + c;
-		break;
+		else if (testchar('r', c)) {
+			piddata.pvmin  = softuart_getchar();
+			piddata.pvmax  = softuart_getchar();
+			piddata.outmin = softuart_getchar();
+			piddata.outmax = softuart_getchar();
+		}
 		
-		case spiM:
-			state_reset();
-			piddata.I_factor = (msb << 8) + c;
-		break;
+	}
+	
+	else if (testchar('g', c)) {
+		c = softuart_getchar();
 		
-		case spdM:
-			state_reset();
-			piddata.D_factor = (msb << 8) + c;
-		break;
+		if (testchar('v', c))
+			softuart_putchar(piddata.setpoint);
 		
-		case sy:
-			state_reset();
-			pid_set_output(c);
-			piddata.opmode = MANUAL;
-		break;
+		else if (testchar('y', c))
+			softuart_putchar(pid_get_output());
 		
-		case sv:
-			state_reset();
-			piddata.setpoint = c;
-		break;
+		else if (testchar('x', c))
+			softuart_putchar(piddata.processvalue);
 		
-		case si:
-			if (testchar('a', c) || testchar('m', c) || testchar('o', c)) {
-				state = sim;
-				msb = c;
-			}
-			else 
-				state_reset();
-		break;
+		else if (testchar('m', c))
+			softuart_putchar(piddata.opmode);
 		
-		case sim:
-			state_reset();
-		break;
+		else if (testchar('r', c)) {
+			softuart_putchar(piddata.pvmin);
+			softuart_putchar(piddata.pvmax);
+			softuart_putchar(piddata.outmin);
+			softuart_putchar(piddata.outmax);
+		}
 		
-		case g:
-			if (testchar('p', c))
-				state = gp;
-			else {
-				state_reset();
-
-				if (testchar('v', c)) 
-					softuart_putchar(piddata.setpoint);
-				else if (testchar('x', c))
-					softuart_putchar(piddata.processvalue);
-				else if (testchar('y', c)) 
-					softuart_putchar(pid_get_output());
-				else if (testchar('m', c))
-					softuart_putchar(piddata.opmode);
-				
-				// Debug information
-				else if (testchar('d', c)) {
-					
-#ifndef PID_DEBUG
-					softuart_puts_P("No debug.");
-#else
-				
-					if (piddata.esum < 0) {
-						softuart_putchar(1);
-						put_word(-piddata.esum);
-					}
-					else {
-						softuart_putchar(0);
-						put_word(piddata.esum);
-					}
-					
-					if (piddebug.pterm < 0) {
-						softuart_putchar(1);
-						put_word((uint16_t) (-piddebug.pterm >> 16));
-						put_word((uint16_t) (-piddebug.pterm & 0xFFFF));
-					}
-					else {
-						softuart_putchar(0);
-						put_word((uint16_t) (piddebug.pterm >> 16));
-						put_word((uint16_t) (piddebug.pterm & 0xFFFF));
-					}
-					if (piddebug.iterm < 0) {
-						softuart_putchar(1);
-						put_word((uint16_t) (-piddebug.iterm >> 16));
-						put_word((uint16_t) (-piddebug.iterm & 0xFFFF));
-					}
-					else {
-						softuart_putchar(0);
-						put_word((uint16_t) (piddebug.iterm >> 16));
-						put_word((uint16_t) (piddebug.iterm & 0xFFFF));
-					}
-					if (piddebug.dterm < 0) {
-						softuart_putchar(1);
-						put_word((uint16_t) (-piddebug.dterm >> 16));
-						put_word((uint16_t) (-piddebug.dterm & 0xFFFF));
-					}
-					else {
-						softuart_putchar(0);
-						put_word((uint16_t) (piddebug.dterm >> 16));
-						put_word((uint16_t) (piddebug.dterm & 0xFFFF));
-					}
-#endif
-					
-				}
-			}
-		break;
+		else if (testchar('p', c))
+			put_word(piddata.P_factor);
 		
-		case gp:
-			state_reset();
-			
-			if (testchar('p', c)) 
-				put_word(piddata.P_factor);
-			else if (testchar('i', c))
-				put_word(piddata.I_factor);
-			else if (testchar('d', c))
-				put_word(piddata.D_factor);
-		break;
+		else if (testchar('i', c))
+			put_word(piddata.I_factor);
 		
-		default: 
-			state = init;
-    }    
+		else if (testchar('d', c))
+			put_word(piddata.D_factor);
+		
+		else if (testchar('c', c)) {
+			softuart_putchar(SAMPLING_TIME);
+			softuart_putchar(SCALING_FACTOR);
+		}
+	}
 }

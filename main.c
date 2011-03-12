@@ -44,7 +44,6 @@
 #include <avr/io.h>
 #include "pid.h"
 #include "cli.h"
-#include "softuart.h"
 
 int main()
 {
@@ -54,12 +53,7 @@ int main()
 	init_pid();
 	
     while (1) {
-
-		if (softuart_kbhit()) {
-			c = softuart_getchar();
-			command_loop(c);
-		}
-		
+		command_loop();
 		pid_run();        
     }
     
