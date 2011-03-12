@@ -168,6 +168,18 @@ class tinyPID (object):
 		self.__write("gy")
 		return self.__readb()
 
+	def get_limits(self):
+		""" Get PV and output limits. """
+		
+		self.__write("gl")
+		return self.__readb(4)
+
+	def get_constants(self):
+		""" Get calculation constants sampling time and scaling factor. """
+		
+		self.__write("gc")
+		return self.__readb(2)
+
 	def set_Kp(self, Kp):
 		""" Set proportional factor 'Kp'. """
 		
@@ -195,6 +207,11 @@ class tinyPID (object):
 		""" Set output value 'y' manually. """
 		
 		self.__write("sy", y)
+		
+	def set_limits(self, xmin=0, xmax=255, ymin=0, ymax=255):
+		""" Set PV and output limits. """
+		
+		self.write("sl", xmin, xmax, ymin, ymax)
 
 	def auto(self):
 		""" Set to automatic mode. """
@@ -242,6 +259,18 @@ class tinyPID (object):
 			return self.get_output()
 		elif name == "e":
 			return self.w-self.x
+		
+		elif name in ("xmax, xmin, ymax, ymin, pvmax, pvmin, outmax, outmin"):
+			xmin, xmax, ymin, ymax = self.get_limits()
+			if name in ("xmin, pvmin"):
+				return xmin
+			elif name in ("xmax, pvmax"):
+				return xmax
+			elif name in ("ymin", "outmin"):
+				return ymin
+			elif name in ("ymax", "outmax"):
+				return ymax
+		
 		else:
 			object.__getattr__(self, name)
 
@@ -274,6 +303,19 @@ class tinyPID (object):
 				self.stop()
 			else:
 				raise AttributeError("opmode must be 'a', 'm' or 'o'")
-
+			
+		elif name in ("xmax, xmin, ymax, ymin, pvmax, pvmin, outmax, outmin"):
+			xmin, xmax, ymin, ymax = self.get_limits()
+			if name in ("xmin, pvmin"):
+				xmin = value
+			elif name in ("xmax, pvmax"):
+				xmax = value
+			elif name in ("ymin", "outmin"):
+				ymin = value
+			elif name in ("ymax", "outmax"):
+				ymax = value
+			
+			self.set_limits(xmin, xmax, ymin, ymax)
+		
 		else:
 			object.__setattr__(self, name, value)
