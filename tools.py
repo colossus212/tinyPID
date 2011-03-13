@@ -66,7 +66,7 @@ def ystepresponse(pid, y0=0, y1=255, count0=500, count1=1000):
 		t.append(time() - t0)
 		y.append(pid.y)
 	
-	return(t, x, y)
+	return (t, x, y)
 	
 def wstepresponse(pid, w0=0, w1=255, count0=500, count1=1000):
 	pid.auto()
@@ -84,9 +84,9 @@ def wstepresponse(pid, w0=0, w1=255, count0=500, count1=1000):
 		y.append(pid.y)
 		w.append(pid.w)
 	
-	return(t, x, y, w)
+	return (t, x, y, w)
 	
-def log(pid, interval=1):
+def logging(pid, interval=1):
 	try:
 		while True:
 			w, x, y = pid.w, pid.x, pid.y
@@ -95,3 +95,14 @@ def log(pid, interval=1):
 			sleep(interval)
 	except KeyboardInterrupt:
 		return
+
+def qplot(t, x=None, y=None, w=None):
+	if x is not None:
+		plot(t, x, 'r', label='x')
+	if y is not None:
+		plot(t, y, 'b', label='y')
+	if w is not None:
+		plot(t, w, 'g', label='w')
+	
+	legend()
+	show()
