@@ -27,7 +27,7 @@
  * gp     get parameter P_factor, returns MSB, LSB
  * gi     get parameter I_factor, returns MSB, LSB
  * gd     get parameter D_factor, returns MSB, LSB
- * gm     get operation mode, returns 'a', 'm' or 'o'
+ * gm     get operation mode, returns 'a' or 'm'
  * gv     get setpoint
  * gx     get process value
  * gy     get output value
@@ -44,9 +44,6 @@
 #include "pid.h"
 
 extern piddata_t piddata;
-#ifdef PID_DEBUG
-extern piddebug_t piddebug;
-#endif
 
 /* This is a very dirty workaround to a communication error with softuart.
  * Sometimes, bytes are received in a strange way, adding one most-significant
