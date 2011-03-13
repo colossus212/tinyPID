@@ -1,0 +1,7 @@
+* dokumentiere P_factor, etc in regleralgorithmus!
+* kommandosatz überdenken, kommandos minimieren
+* pid.c bereinigen und struktur verfeinern (globale variablen etc.)
+* cli komplett aufräumen
+* debugging information entfernen?
+* megaPID: mehrere Regler auf einem Mega, dazu strukturen in pid.c anpassen 
+  (mehrere structs mit den reglerdaten, funktionen passendes struct übergeben)

@@ -9,176 +9,308 @@
 
 import serial
 
+SAMPLING_TIME  = 16e-3
+SCALING_FACTOR = 128
+
+
+def to_word(msb, lsb):
+	return (msb << 8) + lsb
+
+def to_bytes(word):
+	return (word >> 8, word & 0xFF)
+
+
 def Ki_to_Tn(kp, ki):
-    return float(kp)/ki
+    if ki > 0:
+        return float(kp)/ki
+    else:
+        return 0
 
 def Kd_to_Tv(kp, kd):
-    return float(kd)/kp
+    if kp > 0:
+        return float(kd)/kp
+    else:
+        return 0
 
 def Tn_to_Ki(kp, tn):
-    return kp/tn
+    if tn > 0:
+        return kp/tn
+    else:
+        raise ValueError
 
 def Tv_to_Kd(kp, tv):
     return kp * tv
 
 
+def pfactor_scale(kp):
+	f = SCALING_FACTOR * kp 
+	return int(round(f))
+
+def pfactor_unscale(f):
+	return f/float(SCALING_FACTOR)
+
+def ifactor_scale(ki):
+	f = ki * SCALING_FACTOR * SAMPLING_TIME 
+	return int(round(f))
+
+def ifactor_unscale(f):
+	return f/(SCALING_FACTOR * SAMPLING_TIME)
+
+def dfactor_scale(kd):
+	f = kd * SCALING_FACTOR/SAMPLING_TIME 
+	return int(round(f))
+
+def dfactor_unscale(f):
+	return f * SAMPLING_TIME/SCALING_FACTOR
+
+
+
 class tinyPID (object):
 
-    def __init__(self, *args, **kwargs):
-        self.com = serial.Serial(*args, **kwargs)
-        if not self.com.getTimeout():
-            self.com.setTimeout(2)
+	def __init__(self, *args, **kwargs):
+		self.com = serial.Serial(*args, **kwargs)
+		if not self.com.getTimeout():
+			self.com.setTimeout(2)
+	
+	def __del__(self):
+		del self.com
 
-    def __readc(self, count=1):
-        s = self.com.read(count)
-        if len(s) < count:
-            return None
-        else:
-            return s
-    
-    def __readb(self, count=1):
-        s = self.__readc(count)
-        if s is not None:
-            b = map(ord, s)
-            if count == 1:
-                return b[0]
-            else:
-                return b
-        else: 
-            return None
 
-    def __write(self, *args):
-        for s in args:
-            if not type(s) in (str, int):
-                raise TypeError
+	def __readc(self, count=1):
+		""" Read and return character(s). """
+		s = self.com.read(count)
+		if len(s) < count:
+			return None
+		else:
+			return s	
+	
+	def __readb(self, count=1):
+		""" Read byte(s) and return integer(s). """
+		s = self.__readc(count)
+		if s is not None:
+			b = map(ord, s)
+			if len(b) == 1:
+				return b[0]
+			else:
+				return b
+		else:
+			return None
+			
+	def __readw(self, count=1):
+		""" Read byte pair(s) MSB, LSB and return integer(s). """
+		r = []
+		for i in range(0, count):
+			b = self.__readb(2)
+			if b is not None and len(b) == 2:
+				r.append(to_word(b[0], b[1]))
+		
+		if len(r) == 1:
+			return r[0]
+		elif len(r) == 0:
+			return None
+		else:
+			return r
 
-            if type(s) is int:
-                s = chr(s)
-            self.com.write(s)
+	def __write(self, *args):
+		""" Write characters/bytes. """
+		for s in args:
+			if not type(s) in (str, int):
+				raise TypeError			
+			if type(s) is int:
+				s = chr(s)
+			self.com.write(s)
 
-    def get_mode(self):
-        self.__write("gm")
-        return self.__readc()
+	def __writew(self, word):
+		""" Write a long number as MSB/LSB-pair. """
+		msb, lsb = to_bytes(word)
+		self.__write(msb, lsb)
+		
 
-    def get_parameters(self):
-        self.__write("gp")
-        p = self.__readb(3)
-        if p is not None:
-            p[0] = p[0] / 10.
-            return p
-        else:
-            return None
+	def get_mode(self):
+		""" Get operation mode. """
+		
+		self.__write("gm")
+		return self.__readc()
 
-    def get_initial(self):
-        self.__write("gi")
-        return self.__readc(), self.__readb()
+	def get_Kp(self):
+		""" Get proportional factor. """
+		
+		self.__write("gpp")
+		return pfactor_unscale(self.__readw())
 
-    def get_pv(self):
-        self.__write("gx")
-        return self.__readb()
-
-    def get_value(self):
-        self.__write("gv")
-        return self.__readb()
-
-    def get_output(self):
-        self.__write("gy")
-        return self.__readb()
-
-    def set_parameters(self, Kp, Ki, Kd):
-        self.__write("sp", int(10*Kp), Ki, Kd)
-
-    def set_value(self, w):
-        self.__write("sv", w)
-
-    def set_initial(self, mode, value=0):
-        self.__write("si", mode, value)
-
-    def set_output(self, value):
-        self.__write("sy", value)
-
-    def auto(self):
-        self.__write("a")
-
-    def manual(self):
-        self.__write("m")
-
-    def stop(self):
-        self.__write("o")
-
-    def __getattr__(self, name):
-        if name in ("Kp", "Ki", "Kd", "Tn", "Tv"):
-            p, i, d = self.get_parameters()
-            if name == "Kp":
-                return p
-            elif name == "Ki":
-                return i
-            elif name == "Kd":
-                return d
-            elif name == "Tn":
-                return Ki_to_Tn(p, i)
-            elif name == "Tv":
-                return Kd_to_Tv(p, d)
-
-        elif name in ("InitMode", "InitValue"):
-            m, v = self.get_initial()
-            if name == "InitMode":
-                return m
-            else:
-                return v
-
-        elif name == "opmode":
-            return self.get_mode()
-
-        elif name == "w" or name == "SV":
-            return self.get_value()
-        elif name == "x" or name == "PV":
-            return self.get_pv()
-        elif name == "y":
-            return self.get_output()
-        else:
-            object.__getattr__(self, name)
-
-    def __setattr__(self, name, value):
-        if name in ("Kp", "Ki", "Kd", "Tn", "Tv"):
-            p, i, d = self.get_parameters()
-            if name == "Kp":
-                self.set_parameters(Kp=value, Ki=i, Kd=d)
-            elif name == "Ki":
-                self.set_parameters(Kp=p, Ki=value, Kd=d)
-            elif name == "Kd":
-                self.set_parameters(Kp=p, Ki=i, Kd=value)
-            elif name == "Tn":
-                i = Tn_to_Ki(p, value)
-                self.set_parameters(Kp=p, Ki=i, Kd=d)
-            elif name == "Tv":
-                d = Tv_to_Kd(p, value)
-                self.set_parameters(Kp=p, Ki=i, Kd=d)
-
-        elif name == "w":
-            self.set_value(value)
-
-        elif name == "y":
-            self.set_output(value)
-
-        elif name == "opmode":
-            if value == 'a':
-                self.auto()
-            elif value == 'm':
-                self.manual()
-            elif value == 'o':
-                self.stop()
-            else:
-                raise AttributeError("opmode must be 'a', 'm' or 'o'")
-
-        elif name in ("InitMode", "InitValue"):
-            m, v = self.get_initial();
-            if name == "InitMode":
-                self.set_initial(mode=value, value=v)
-            else:
-                self.set_initial(mode=m, value=value)
-
-        else:
-            object.__setattr__(self, name, value)
-
+	def get_Ki(self):
+		""" Get integral factor. """
+		
+		self.__write("gpi")
+		return ifactor_unscale(self.__readw())
         
+	def get_Kd(self):
+		""" Get derivative factor. """
+		
+		self.__write("gpd")
+		return dfactor_unscale(self.__readw())
+
+	def get_pv(self):
+		""" Get process value 'x'. """
+		
+		self.__write("gx")
+		return self.__readb()
+
+	def get_setpoint(self):
+		""" Get setpoint 'w'. """
+		
+		self.__write("gv")
+		return self.__readb()
+
+	def get_output(self):
+		""" Get output value 'y'. """
+		
+		self.__write("gy")
+		return self.__readb()
+
+	def get_limits(self):
+		""" Get PV and output limits. """
+		
+		self.__write("gl")
+		return self.__readb(4)
+
+	def get_constants(self):
+		""" Get calculation constants sampling time and scaling factor. """
+		
+		self.__write("gc")
+		return self.__readb(2)
+
+	def set_Kp(self, Kp):
+		""" Set proportional factor 'Kp'. """
+		
+		self.__write("spp")
+		self.__writew(pfactor_scale(Kp))
+        
+	def set_Ki(self, Ki):
+		""" Set integral factor 'Ki'. """
+		
+		self.__write("spi")
+		self.__writew(ifactor_scale(Ki))
+	
+	def set_Kd(self, Kd):
+		""" Set derivative factor 'Kd'. """
+		
+		self.__write("spd")
+		self.__writew(dfactor_scale(Kd))
+	
+	def set_setpoint(self, w):
+		""" Set setpoint 'w'. """
+		
+		self.__write("sv", w)
+
+	def set_output(self, y):
+		""" Set output value 'y' manually. """
+		
+		self.__write("sy", y)
+		
+	def set_limits(self, xmin=0, xmax=255, ymin=0, ymax=255):
+		""" Set PV and output limits. """
+		
+		self.write("sl", xmin, xmax, ymin, ymax)
+
+	def auto(self):
+		""" Set to automatic mode. """
+		
+		self.__write("a")
+
+	def manual(self):
+		""" Set to manual mode. """
+		
+		self.__write("m")
+
+	def save(self):
+		""" Save device configuration to EEPROM. """
+		
+		self.__write("e")
+
+
+	def __getattr__(self, name):
+		if name == "Kp":
+			return self.get_Kp()
+		elif name == "Ki":
+			return self.get_Ki()
+		elif name == "Kd":
+			return self.get_Kd()
+		elif name == "Tn":
+			p, i = self.get_Kp(), self.get_Ki()
+			return Ki_to_Tn(p, i)
+		elif name == "Tv":
+			p, d = self.get_Kp(), self.get_Kd()
+			return Kd_to_Tv(p, d)
+
+		elif name == "opmode":
+			return self.get_mode()
+
+		elif name == "w" or name == "SP":
+			return self.get_setpoint()
+		elif name == "x" or name == "PV":
+			return self.get_pv()
+		elif name == "y":
+			return self.get_output()
+		elif name == "e":
+			return self.w-self.x
+		
+		elif name in ("xmax, xmin, ymax, ymin, pvmax, pvmin, outmax, outmin"):
+			xmin, xmax, ymin, ymax = self.get_limits()
+			if name in ("xmin, pvmin"):
+				return xmin
+			elif name in ("xmax, pvmax"):
+				return xmax
+			elif name in ("ymin", "outmin"):
+				return ymin
+			elif name in ("ymax", "outmax"):
+				return ymax
+		
+		else:
+			object.__getattr__(self, name)
+
+	def __setattr__(self, name, value):
+		if name == "Kp":
+			self.set_Kp(value)
+		elif name == "Ki":
+			self.set_Ki(value)
+		elif name == "Kd":
+			self.set_Kd(value)
+		elif name == "Tn":
+			Ki = Tn_to_Ki(self.get_Kp(), value)
+			self.set_Ki(Ki)
+		elif name == "Tv":
+			Kd = Tv_to_Kd(self.get_Kp(), value)
+			self.set_Kd(Kd)
+			
+		elif name == "w" or name == "SP":
+			self.set_setpoint(value)
+
+		elif name == "y":
+			self.set_output(value)
+
+		elif name == "opmode":
+			if value == 'a':
+				self.auto()
+			elif value == 'm':
+				self.manual()
+			elif value == 'o':
+				self.stop()
+			else:
+				raise AttributeError("opmode must be 'a', 'm' or 'o'")
+			
+		elif name in ("xmax, xmin, ymax, ymin, pvmax, pvmin, outmax, outmin"):
+			xmin, xmax, ymin, ymax = self.get_limits()
+			if name in ("xmin, pvmin"):
+				xmin = value
+			elif name in ("xmax, pvmax"):
+				xmax = value
+			elif name in ("ymin", "outmin"):
+				ymin = value
+			elif name in ("ymax", "outmax"):
+				ymax = value
+			
+			self.set_limits(xmin, xmax, ymin, ymax)
+		
+		else:
+			object.__setattr__(self, name, value)

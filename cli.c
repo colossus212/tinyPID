@@ -3,34 +3,37 @@
  *
  * Command-line interface (sort of) for tinyPID.
  *
- * The format is kind of raw, each incoming byte is interpreted and should
- * should have a meaning.
- * Arguments to commands have a range of 0…255 and are sent as raw bytes too.
+ * The format is kind of raw, numbers don't get converted to ASCII.
+ * Arguments to commands have a range of 0…255 and are sent as raw bytes.
  * The commands itself can be intrepreted as ASCII characters. No line-ending 
- * is needed. A command is terminated when all of its arguments have been read.
+ * is needed. A command is executed when all of its arguments have been read.
  *
- * In the following table, X is any byte
+ * In the following table, X is any byte, M is most-significant, L - least significant byte
  *
- * ASCII         HEX          DESCRIPTION
- * a             61           set mode to automatic
- * m             6D           set mode to manual
- * o             6F           set mode to off, no output
- *
- * svX           73 76  X     set the set-value to X
- * syX           73 79  X     set output value to X, 
- *                             this toggles manual mode
- * spXXX         73 70  X X X set the parameters 10Kp, Ki, Kd to the X's (in that order)
- * siaX          73 69 61 X   set initial mode (after power-up) to automatic, 
- *                             initial set-value to X
- * simX          73 69 6D X   set initial mode to manual,
- *                             initial output to X
- * gp            67 70        get parameters, returns 10Kp, Ki, Kd, in that order
- * gm            67 6D        get operation mode, returns 'a', 'm' or 'o'
- * gi            67 69        get initial mode and value, in that order
- * gv            67 76        get set-value, returns that byte
- * gx            67 76        get process value, returns that byte
- * gy            67 76        get output value, returns that byte
- *
+ * ASCII  DESCRIPTION
+ * a      set mode to automatic
+ * m      set mode to manual
+ * 
+ * e      save configuration to EEPROM
+ * 
+ * 
+ * svX    set the setpoint to X
+ * syX    set output value to X, this toggles manual mode
+ * spML   set the parameter P_factor
+ * siML   set I_factor
+ * sdML   set D_factor
+ * slXXXX set limits (PVmin, PVmax, OUTmin, OUTmax)
+ * 
+ * gp     get parameter P_factor, returns MSB, LSB
+ * gi     get parameter I_factor, returns MSB, LSB
+ * gd     get parameter D_factor, returns MSB, LSB
+ * gm     get operation mode, returns 'a', 'm' or 'o'
+ * gv     get setpoint
+ * gx     get process value
+ * gy     get output value
+ * gc     get calculation constants SAMPLING_TIME (in ms) and SCALING_FACTOR
+ * gl     get limits (process value min/max, output min/max)
+ * 
  */
 
 
@@ -40,8 +43,36 @@
 #include "softuart.h"
 #include "pid.h"
 
-extern uint8_t opmode, y, x, w, Kp, Kd, Ki, InitMode, InitValue;
+extern piddata_t piddata;
+#ifdef PID_DEBUG
+extern piddebug_t piddebug;
+#endif
 
+/* This is a very dirty workaround to a communication error with softuart.
+ * Sometimes, bytes are received in a strange way, adding one most-significant
+ * bit to the character. 
+ * This function tries to restore the byte to an expected character.
+ */
+uint8_t testchar(char expected, char received)
+{
+	return (expected == received || expected == (received - 128));
+}
+
+void put_word(uint16_t word)
+{
+	softuart_putchar((uint8_t) (word >> 8));
+	softuart_putchar((uint8_t) (word & 0xFF));
+}
+
+uint16_t get_word()
+{
+	char lsb, msb;
+	
+	msb = softuart_getchar();
+	lsb = softuart_getchar();
+	
+	return (uint16_t) ((msb<<8) + lsb);
+}
 
 void init_cli()
 {
@@ -49,88 +80,87 @@ void init_cli()
     sei();
 }
 
-
 void command_loop()
 {
-    char c;
-
-    if (softuart_kbhit()) {
-        c = softuart_getchar();
-        switch (c) {
-            case 'a':
-                opmode = AUTO;
-            break;
-
-            case 'm':
-                opmode = MANUAL;
-            break;
-
-            case 'o':
-                opmode = STOP;
-            break;
-
-            case 's':
-                c = softuart_getchar();
-                switch (c) {
-                    case 'v':
-                        w = softuart_getchar();
-                    break;
-
-                    case 'p':
-                        Kp = softuart_getchar();
-                        Ki = softuart_getchar();
-                        Kd = softuart_getchar();
-                        pid_save_parameters();
-                    break;
-
-                    case 'i':
-                        InitMode  = softuart_getchar();
-                        InitValue = softuart_getchar();
-                        pid_save_parameters();
-                    break;
-
-                    case 'y':
-                        y = softuart_getchar();
-                        opmode = MANUAL;
-                    break;
-                }
-            break;
-
-            case 'g':
-                c = softuart_getchar();
-                switch (c) {
-                    case 'v':
-                        softuart_putchar(w);
-                    break;
-
-                    case 'x':
-                        softuart_putchar(x);
-                    break;
-
-                    case 'y':
-                        softuart_putchar(y);
-                    break;
-
-                    case 'p':
-                        softuart_putchar(Kp);
-                        softuart_putchar(Ki);
-                        softuart_putchar(Kd);
-                    break;
-
-                    case 'm':
-                        softuart_putchar(opmode);
-                    break;
-
-                    case 'i':
-                        softuart_putchar(InitMode);
-                        softuart_putchar(InitValue);
-                    break;
-                }
-            break;
-
-            default:
-                softuart_putchar('?');
-            break;
-        }
-    }
+	char c;
+	
+	if (softuart_kbhit())
+		c = softuart_getchar();
+	else
+		return;
+	
+	if (testchar('a', c))
+		pid_auto();
+	
+	else if (testchar('m', c))
+		pid_manual();
+	
+	else if (testchar('e', c))
+		pid_save_parameters();
+	
+	else if (testchar('s', c)) {
+		c = softuart_getchar();
+		
+		if (testchar('v', c))
+			piddata.processvalue = softuart_getchar();
+		
+		else if (testchar('y', c)) {
+			pid_manual();
+			pid_set_output(softuart_getchar());
+		}
+		
+		else if (testchar('p', c)) 
+			piddata.P_factor = get_word();
+		
+		else if (testchar('i', c)) 
+			piddata.I_factor = get_word();
+		
+		else if (testchar('d', c))
+			piddata.D_factor = get_word();
+		
+		else if (testchar('l', c)) {
+			piddata.pvmin  = softuart_getchar();
+			piddata.pvmax  = softuart_getchar();
+			piddata.outmin = softuart_getchar();
+			piddata.outmax = softuart_getchar();
+		}
+		
+	}
+	
+	else if (testchar('g', c)) {
+		c = softuart_getchar();
+		
+		if (testchar('v', c))
+			softuart_putchar(piddata.setpoint);
+		
+		else if (testchar('y', c))
+			softuart_putchar(pid_get_output());
+		
+		else if (testchar('x', c))
+			softuart_putchar(piddata.processvalue);
+		
+		else if (testchar('m', c))
+			softuart_putchar(piddata.opmode);
+		
+		else if (testchar('l', c)) {
+			softuart_putchar(piddata.pvmin);
+			softuart_putchar(piddata.pvmax);
+			softuart_putchar(piddata.outmin);
+			softuart_putchar(piddata.outmax);
+		}
+		
+		else if (testchar('p', c))
+			put_word(piddata.P_factor);
+		
+		else if (testchar('i', c))
+			put_word(piddata.I_factor);
+		
+		else if (testchar('d', c))
+			put_word(piddata.D_factor);
+		
+		else if (testchar('c', c)) {
+			softuart_putchar(SAMPLING_TIME);
+			softuart_putchar(SCALING_FACTOR);
+		}
+	}
 }

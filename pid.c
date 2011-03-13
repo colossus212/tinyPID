@@ -3,132 +3,215 @@
 #include <avr/eeprom.h>
 #include "pid.h"
 
-uint8_t eeKp EEMEM = 0;
-uint8_t eeKi EEMEM = 0;
-uint8_t eeKd EEMEM = 0;
-uint8_t eeInitValue EEMEM = 0;
-uint8_t eeInitMode EEMEM = STOP;
+volatile uint8_t sampleflag = 0;
 
-uint8_t Kp, Ki, Kd;
-uint8_t y;
-uint8_t w, x;
-uint8_t opmode;
-uint8_t InitMode, InitValue;
+uint8_t  eePvmin EEMEM    = 0;
+uint8_t  eePvmax EEMEM    = 255;
+uint8_t  eeOutmin EEMEM   = 0;
+uint8_t  eeOutmax EEMEM   = 255;
+uint8_t  eeSetpoint EEMEM = 0;
+uint8_t  eeOpmode   EEMEM = MANUAL;
+uint16_t eeP_factor EEMEM = 0;
+uint16_t eeI_factor EEMEM = 0;
+uint16_t eeD_factor EEMEM = 0;
+
+piddata_t piddata = {0,0,0,0,MANUAL,0,0,255,0,255,0,0};
+
 
 ISR(WDT_vect)
 {
 	// keep WDT from resetting, interrupt instead
-	WDTCR |= (1 << WDIE);
-    contr();
+	WDTCR |= _BV(WDIE);
+    sampleflag = 1;
 }
 
-
-void init_pid()
+void init_periph()
 {
-    Kp = eeprom_read_byte(&eeKp);
-    Ki = eeprom_read_byte(&eeKi);
-    Kd = eeprom_read_byte(&eeKd);
-
-    InitMode  = eeprom_read_byte(&eeInitMode); 
-    InitValue = eeprom_read_byte(&eeInitValue);
-
-    w = 0;
-    x = 0;
-    y = 0;
-    
     cli();
 
     // I/O setup
-    IO_PORT = 0xFF;
+    IO_PORT = 0x00;
     IO_DDR |=_BV(IO_PWM);
 
     // PWM setup
     // Timer1, does FAST PWM, prescaler = 1
-    TCCR1 =  _BV(CS10); //| _BV(CS11);
+    TCCR1 =  _BV(CS10);
     GTCCR  = _BV(COM1B0) | _BV(PWM1B);
     OCR1C = 0xFF; // TOP
     PWM = 0;
 
     // WDT setup
     // enable watchdog timer, use interrupt instead of reset, every 0.016 seconds
-    WDTCR = (1 << WDE) | (1 << WDIE);
+    WDTCR = _BV(WDE) | _BV(WDIE);
     
     // ADC setup
     // enable ADC, VCC ref., set prescaler to 8
-    ADCSRA = (1 << ADEN) | (1 << ADPS1) | (1 << ADPS0);
-    // set ADC channel, left-justify result
-    ADMUX = ADCHAN | (1 << ADLAR);
-
-    // Operation mode setup and initial values
-    opmode = InitMode;
-    if (opmode == AUTO)
-        w = InitValue;
-    else if (opmode == MANUAL)
-        PWM = InitValue;
-    else { // if sth. went wrong with the mode
-        opmode = STOP;
-        PWM = 0;
-    }
+    ADCSRA = _BV(ADEN) | _BV(ADPS1) | _BV(ADPS0);
+    // set ADC channel
+    ADMUX = ADCHAN;
 
     // enable interrupts
     sei();
 }
 
-void contr()
+void init_pid()
 {
-    static int16_t e_sum = 0;
-    static int16_t e_last = 0;
-    float u = 0;
-
-    x = read_pv();
-
-    if (opmode == AUTO) {
-        e_sum += w - x;
-        if (e_sum >  400) e_sum =  400; // magic!
-        if (e_sum < -400) e_sum = -400; // magic!
-
-        u  = Kp * KpAttn * (w - x);
-        u += Ki * Ts * e_sum;
-        u += Kd * fs * (w - x - e_last);
-
-        e_last = w - x;
-
-        if (u > 255) y = 255;
-        else if (u < 0) y = 0;
-        else
-            y = (uint8_t) u;
-    }
-    else {
-        e_last = e_sum = 0;
-        if (opmode == STOP)
-            y = 0;
-    }
-    PWM = y;
+    cli();
+    pid_set_output(0);
+    pid_load_parameters();
+    sei();
 }
 
-uint8_t read_pv()
+// limit process value and stretch to fullscale 0..255
+uint8_t scale_pv(uint8_t pv)
 {
-    uint8_t a = 0, i = 0;
-
-    ADMUX = ADCHAN | (1 << ADLAR);
+	if (pv > piddata.pvmax)
+		pv = piddata.pvmax;
+	else if (pv < piddata.pvmin)
+		pv = piddata.pvmin;
 	
-	// read ADC, take 4 samples
-	for (i=0; i < 4; i++) {
-		ADCSRA |= (1 << ADSC);         // start conversion
-		while (ADCSRA & (1 << ADSC));  // wait till end of conversion
+	pv -= piddata.pvmin;
+	return (uint8_t) ((pv * 255)/(piddata.pvmax - piddata.pvmin));
+}
 
-		a = ADCL;      // must be read first
-        a = ADCH;      // overwrite with 8 MSB
+void pid_run()
+{
+	uint8_t x = pid_read_pv();
+	
+    piddata.last_pv = piddata.processvalue;
+	piddata.processvalue = scale_pv(x);
+
+    if (sampleflag == 1 && piddata.opmode == AUTO) {
+		sampleflag = 0;
+        pid_contr();
 	}
+}
 
-    return a/4;
+void pid_auto()
+{
+	pid_reset();
+	piddata.opmode = AUTO;
+}
+
+void pid_manual()
+{
+	pid_reset();
+	piddata.opmode = MANUAL;
+}
+
+void pid_reset() 
+{
+    piddata.esum = 0;
+	piddata.last_pv = 0;
+    piddata.processvalue = 0;
 }
 
 void pid_save_parameters()
 {
-    eeprom_write_byte(&eeKp, Kp);
-    eeprom_write_byte(&eeKi, Ki);
-    eeprom_write_byte(&eeKd, Kd);
-    eeprom_write_byte(&eeInitValue, InitValue);
-    eeprom_write_byte(&eeInitMode, InitMode);
+    eeprom_write_word(&eeP_factor, piddata.P_factor);
+    eeprom_write_word(&eeI_factor, piddata.I_factor);
+    eeprom_write_word(&eeD_factor, piddata.D_factor);
+	
+    eeprom_write_byte(&eeSetpoint, piddata.setpoint);
+    eeprom_write_byte(&eeOpmode,   piddata.opmode);
+	
+	eeprom_write_byte(&eePvmin,    piddata.pvmin);
+	eeprom_write_byte(&eePvmax,    piddata.pvmax);
+	eeprom_write_byte(&eeOutmin,   piddata.outmin);
+	eeprom_write_byte(&eeOutmax,   piddata.outmax);
+}
+
+void pid_load_parameters()
+{
+    piddata.P_factor = eeprom_read_word(&eeP_factor);
+    piddata.I_factor = eeprom_read_word(&eeI_factor);
+    piddata.D_factor = eeprom_read_word(&eeD_factor);
+	
+    piddata.opmode   = eeprom_read_byte(&eeOpmode);
+    piddata.setpoint = eeprom_read_byte(&eeSetpoint);
+	
+	piddata.pvmin    = eeprom_read_byte(&eePvmin);
+	piddata.pvmax    = eeprom_read_byte(&eePvmax);
+	piddata.outmin   = eeprom_read_byte(&eeOutmin);
+	piddata.outmax   = eeprom_read_byte(&eeOutmax);
+}
+
+void pid_contr()
+{
+	int16_t e;
+	int32_t pterm, iterm, dterm;
+	int64_t u;
+
+    e = piddata.setpoint - piddata.processvalue;
+	piddata.esum += e;
+
+    if (piddata.esum > MAX_ERROR_SUM) 
+        piddata.esum = MAX_ERROR_SUM;
+    else if (piddata.esum < -MAX_ERROR_SUM)
+        piddata.esum = -MAX_ERROR_SUM;
+	
+	// multiplying 32-bit integers with negatives doesn't work well,
+	// so there is this little workaround:
+		
+	if (e >= 0)
+		pterm = piddata.P_factor * e;
+	else {
+		pterm = piddata.P_factor * -e;
+		pterm = -pterm;
+	}
+
+	if (piddata.esum >= 0)
+		iterm = piddata.I_factor * piddata.esum;
+	else {
+		iterm = piddata.I_factor * -piddata.esum;
+		iterm = -iterm;
+	}
+
+    // for more robustness, base D-term to change in process value only (ref.: AVR221)
+    if (piddata.processvalue >= piddata.last_pv)
+		dterm = piddata.D_factor * (piddata.processvalue - piddata.last_pv);
+	else {
+		dterm = piddata.D_factor * (piddata.last_pv - piddata.processvalue);
+		dterm = -dterm;
+	}
+    
+    u = (pterm + iterm + dterm) / SCALING_FACTOR;
+    
+    pid_set_output( (int32_t) u);
+
+}
+
+void pid_set_output(int32_t y)
+{
+    if (y > piddata.outmax) 
+        PWM = piddata.outmax;
+    else if (y < piddata.outmin)
+        PWM = piddata.outmin;
+    else 
+        PWM = (uint8_t) y;
+}
+
+uint8_t pid_get_output()
+{
+    return PWM;
+}
+
+uint8_t pid_read_pv()
+{
+    uint16_t a = 0;
+	uint8_t i = 0;
+
+    ADMUX = ADCHAN ;
+	
+	// read ADC, take 4 samples
+	for (i=0; i < 4; i++) {
+		ADCSRA |= _BV(ADSC);         // start conversion
+		while (ADCSRA & _BV(ADSC));  // wait till end of conversion
+
+		a += ADCW;
+	}
+
+	a = a >> 2; // devide by 4 to get mean
+	a = a >> 2; // get 8bit result
+    return (uint8_t) a;
 }
