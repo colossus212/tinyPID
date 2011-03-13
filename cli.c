@@ -99,7 +99,7 @@ void command_loop()
 		c = softuart_getchar();
 		
 		if (testchar('v', c))
-			piddata.processvalue = softuart_getchar();
+			piddata.setpoint = softuart_getchar();
 		
 		else if (testchar('y', c)) {
 			pid_manual();

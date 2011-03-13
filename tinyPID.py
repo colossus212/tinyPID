@@ -135,19 +135,19 @@ class tinyPID (object):
 	def get_Kp(self):
 		""" Get proportional factor. """
 		
-		self.__write("gpp")
+		self.__write("gp")
 		return pfactor_unscale(self.__readw())
 
 	def get_Ki(self):
 		""" Get integral factor. """
 		
-		self.__write("gpi")
+		self.__write("gi")
 		return ifactor_unscale(self.__readw())
         
 	def get_Kd(self):
 		""" Get derivative factor. """
 		
-		self.__write("gpd")
+		self.__write("gd")
 		return dfactor_unscale(self.__readw())
 
 	def get_pv(self):
@@ -183,19 +183,19 @@ class tinyPID (object):
 	def set_Kp(self, Kp):
 		""" Set proportional factor 'Kp'. """
 		
-		self.__write("spp")
+		self.__write("sp")
 		self.__writew(pfactor_scale(Kp))
         
 	def set_Ki(self, Ki):
 		""" Set integral factor 'Ki'. """
 		
-		self.__write("spi")
+		self.__write("si")
 		self.__writew(ifactor_scale(Ki))
 	
 	def set_Kd(self, Kd):
 		""" Set derivative factor 'Kd'. """
 		
-		self.__write("spd")
+		self.__write("sd")
 		self.__writew(dfactor_scale(Kd))
 	
 	def set_setpoint(self, w):
@@ -211,7 +211,7 @@ class tinyPID (object):
 	def set_limits(self, xmin=0, xmax=255, ymin=0, ymax=255):
 		""" Set PV and output limits. """
 		
-		self.write("sl", xmin, xmax, ymin, ymax)
+		self.__write("sl", xmin, xmax, ymin, ymax)
 
 	def auto(self):
 		""" Set to automatic mode. """
