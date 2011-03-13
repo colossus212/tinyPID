@@ -17,6 +17,7 @@ uint16_t eeD_factor EEMEM = 0;
 
 piddata_t piddata = {0,0,0,0,MANUAL,0,0,255,0,255,0,0};
 
+
 ISR(WDT_vect)
 {
 	// keep WDT from resetting, interrupt instead
@@ -209,6 +210,7 @@ uint8_t pid_read_pv()
 
 		a += ADCW;
 	}
+
 	a = a >> 2; // devide by 4 to get mean
 	a = a >> 2; // get 8bit result
     return (uint8_t) a;
