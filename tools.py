@@ -34,8 +34,8 @@ def ystepresponse(pid, y0=0, y1=255, count0=500, count1=1000):
 	return (t, x, y)
 	
 def wstepresponse(pid, w0=0, w1=255, count0=500, count1=1000):
-	pid.auto()
 	pid.w = w0
+	pid.auto()
 	w = []
 	x = []
 	y = []
