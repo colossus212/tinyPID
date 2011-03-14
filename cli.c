@@ -23,6 +23,7 @@
  * siML   set I_factor
  * sdML   set D_factor
  * slXX   set limits (OUTmin, OUTmax)
+ * ssXXML set scale (PVmin, PVmax, PVscale = SCALING_FACTOR * 255/(pvmax-pvmin))
  * 
  * gp     get parameter P_factor, returns MSB, LSB
  * gi     get parameter I_factor, returns MSB, LSB
@@ -33,6 +34,7 @@
  * gy     get output value
  * gc     get calculation constants SAMPLING_TIME (in ms) and SCALING_FACTOR
  * gl     get limits (output min/max)
+ * gs     get scale (pv min/max,scale)
  * 
  */
 
@@ -120,6 +122,12 @@ void command_loop()
 			piddata.outmax = softuart_getchar();
 		}
 		
+		else if (testchar('s', c)) {
+			piddata.pvmin   = softuart_getchar();
+			piddata.pvmax   = softuart_getchar();
+			piddata.pvscale = get_word();
+		}
+		
 	}
 	
 	else if (testchar('g', c)) {
@@ -136,6 +144,12 @@ void command_loop()
 		
 		else if (testchar('m', c))
 			softuart_putchar(piddata.opmode);
+		
+		else if (testchar('s', c)) {
+			softuart_putchar(piddata.pvmin);
+			softuart_putchar(piddata.pvmax);
+			put_word(piddata.pvscale);
+		}
 		
 		else if (testchar('l', c)) {
 			softuart_putchar(piddata.outmin);

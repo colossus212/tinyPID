@@ -173,6 +173,14 @@ class tinyPID (object):
 		self.__write("gl")
 		return self.__readb(2)
 
+	def get_scale(self):
+		""" Get PV scale. """
+		
+		self.__write("gs")
+		xmin, xmax = self.__readb(2)
+		xscale = self.__readw()
+		return xmin, xmax
+
 	def get_constants(self):
 		""" Get calculation constants sampling time and scaling factor. """
 		
@@ -211,6 +219,12 @@ class tinyPID (object):
 		""" Set output limits. """
 		
 		self.__write("sl", ymin, ymax)
+
+	def set_scale(self, xmin=0, xmax=255):
+		""" Set PV scale. """
+		
+		self.__write("ss", xmin, xmax)
+		self.__writew(SCALING_FACTOR * 255/(xmax-xmin))
 
 	def auto(self):
 		""" Set to automatic mode. """
@@ -260,6 +274,13 @@ class tinyPID (object):
 				return ymin
 			elif name in ("ymax", "outmax"):
 				return ymax
+				
+		elif name in ("xmax, xmin, pvmax, pvmin"):
+			xmin, xmax = self.get_scale()
+			if name in ("xmin", "pvmin"):
+				return xmin
+			elif name in ("pvmin", "pvmax"):
+				return xmax
 		
 		else:
 			object.__getattr__(self, name)
@@ -302,6 +323,16 @@ class tinyPID (object):
 				ymax = value
 			
 			self.set_limits(ymin, ymax)
+		
+		elif name in ("xmax, xmin, pvmax, pvmin"):
+			xmin, xmax = self.get_scale()
+			if name in ("xmin", "pvmin"):
+				xmin = value
+			elif name in ("pvmin", "pvmax"):
+				xmax = value
+			
+			self.set_scale(xmin, xmax)
+		
 		
 		else:
 			object.__setattr__(self, name, value)

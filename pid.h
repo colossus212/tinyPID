@@ -31,6 +31,9 @@ typedef struct {
 	
 	uint8_t  outmin;
 	uint8_t  outmax;
+	uint8_t  pvmin;
+	uint8_t  pvmax;
+	uint16_t pvscale;
 	
 	uint8_t last_pv;
 	int16_t esum;
@@ -43,8 +46,9 @@ void pid_run();
 void pid_contr();
 
 uint8_t pid_read_pv();
-void pid_set_output(int32_t y);
 uint8_t pid_get_output();
+uint8_t scale_pv(uint8_t adc);
+void pid_set_output(int32_t y);
 
 void pid_reset();
 void pid_manual();

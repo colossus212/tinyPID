@@ -5,6 +5,9 @@
 
 volatile uint8_t sampleflag = 0;
 
+uint8_t   eePvmin EEMEM = 0;
+uint8_t   eePvmax EEMEM = 0;
+uint16_t  eePvscale EEMEM = SCALING_FACTOR;
 uint8_t  eeOutmin EEMEM   = 0;
 uint8_t  eeOutmax EEMEM   = 255;
 uint8_t  eeSetpoint EEMEM = 0;
@@ -13,7 +16,7 @@ uint16_t eeP_factor EEMEM = 0;
 uint16_t eeI_factor EEMEM = 0;
 uint16_t eeD_factor EEMEM = 0;
 
-piddata_t piddata = {0,0,0,0,MANUAL,0,0,255,0,0};
+piddata_t piddata = {0,0,0,0,MANUAL,0,0,255,0,255,SCALING_FACTOR,0,0};
 
 
 ISR(WDT_vect)
@@ -98,7 +101,10 @@ void pid_save_parameters()
 	
     eeprom_write_byte(&eeSetpoint, piddata.setpoint);
     eeprom_write_byte(&eeOpmode,   piddata.opmode);
-	
+
+	eeprom_write_word(&eePvscale,  piddata.pvscale);
+	eeprom_write_byte(&eePvmin,    piddata.pvmin);
+	eeprom_write_byte(&eePvmax,    piddata.pvmax);
 	eeprom_write_byte(&eeOutmin,   piddata.outmin);
 	eeprom_write_byte(&eeOutmax,   piddata.outmax);
 
@@ -113,6 +119,9 @@ void pid_load_parameters()
     piddata.opmode   = eeprom_read_byte(&eeOpmode);
     piddata.setpoint = eeprom_read_byte(&eeSetpoint);
 	
+	piddata.pvscale  = eeprom_read_word(&eePvscale);
+	piddata.pvmin    = eeprom_read_byte(&eePvmin);
+	piddata.pvmax    = eeprom_read_byte(&eePvmax);
 	piddata.outmin   = eeprom_read_byte(&eeOutmin);
 	piddata.outmax   = eeprom_read_byte(&eeOutmax);
 }
@@ -180,7 +189,7 @@ uint8_t pid_get_output()
 uint8_t pid_read_pv()
 {
     uint16_t a = 0;
-	uint8_t i = 0;
+	uint8_t  i = 0;
 
     ADMUX = ADCHAN ;
 	
@@ -194,5 +203,24 @@ uint8_t pid_read_pv()
 
 	a = a >> 2; // devide by 4 to get mean
 	a = a >> 2; // get 8bit result
-    return (uint8_t) a;
+	
+    return scale_pv((uint8_t) a);
+}
+
+uint8_t scale_pv(uint8_t adc)
+{
+	uint32_t pv = 0;
+	
+	if (piddata.pvmin == 0 && piddata.pvmax == 255)
+		return adc;
+	else if (adc > piddata.pvmax)
+		adc = piddata.pvmax;
+	else if (adc < piddata.pvmin)
+		adc = piddata.pvmin;
+	
+	pv = adc - piddata.pvmin;
+	pv = pv * piddata.pvscale;
+	pv = pv / SCALING_FACTOR;
+	
+	return (uint8_t) pv;
 }

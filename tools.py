@@ -10,11 +10,12 @@ def info(pid):
 	v, n = Kd_to_Tv(p, d), Ki_to_Tn(p, i)
 	w, x, y = pid.w, pid.x, pid.y
 	ymin, ymax = pid.get_limits();
+	xmin, xmax = pid.get_scale();
 	e = w - x
 	m = pid.opmode
 	
 	print "Kp: %2.2f \nKi: %2.2f (Tn: %2.2f) \nKd: %2.2f (Tv: %2.2f)" % (p, i, n, d, v)
-	print "w: %i \nx: %i \ne: %i \ny: %i (%i..%i)" % (w, x, e, y, ymin, ymax)
+	print "w: %i \nx: %i (%i..%i) \ne: %i \ny: %i (%i..%i)" % (w, x, xmin, xmax, e, y, ymin, ymax)
 	print m == 'a' and "automatic" or "manual"
 
 
