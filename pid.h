@@ -29,10 +29,8 @@ typedef struct {
     uint8_t opmode;
     uint8_t processvalue;
 	
-	uint8_t pvmin;
-	uint8_t pvmax;
-	uint8_t outmin;
-	uint8_t outmax;
+	uint8_t  outmin;
+	uint8_t  outmax;
 	
 	uint8_t last_pv;
 	int16_t esum;

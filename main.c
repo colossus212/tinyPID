@@ -32,9 +32,8 @@
     D_factor - Kd/Ts * SCALING_FACTOR
     x - process value)
     
-    It's possible to limit the input (process value) and output value.
+   It's possible to limit the output value.
    
-
 */
 
 #include <avr/io.h>

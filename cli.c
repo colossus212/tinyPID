@@ -22,7 +22,7 @@
  * spML   set the parameter P_factor
  * siML   set I_factor
  * sdML   set D_factor
- * slXXXX set limits (PVmin, PVmax, OUTmin, OUTmax)
+ * slXX   set limits (OUTmin, OUTmax)
  * 
  * gp     get parameter P_factor, returns MSB, LSB
  * gi     get parameter I_factor, returns MSB, LSB
@@ -32,7 +32,7 @@
  * gx     get process value
  * gy     get output value
  * gc     get calculation constants SAMPLING_TIME (in ms) and SCALING_FACTOR
- * gl     get limits (process value min/max, output min/max)
+ * gl     get limits (output min/max)
  * 
  */
 
@@ -116,8 +116,6 @@ void command_loop()
 			piddata.D_factor = get_word();
 		
 		else if (testchar('l', c)) {
-			piddata.pvmin  = softuart_getchar();
-			piddata.pvmax  = softuart_getchar();
 			piddata.outmin = softuart_getchar();
 			piddata.outmax = softuart_getchar();
 		}
@@ -140,8 +138,6 @@ void command_loop()
 			softuart_putchar(piddata.opmode);
 		
 		else if (testchar('l', c)) {
-			softuart_putchar(piddata.pvmin);
-			softuart_putchar(piddata.pvmax);
 			softuart_putchar(piddata.outmin);
 			softuart_putchar(piddata.outmax);
 		}

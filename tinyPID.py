@@ -64,7 +64,6 @@ def dfactor_unscale(f):
 	return f * SAMPLING_TIME/SCALING_FACTOR
 
 
-
 class tinyPID (object):
 
 	def __init__(self, *args, **kwargs):
@@ -169,10 +168,10 @@ class tinyPID (object):
 		return self.__readb()
 
 	def get_limits(self):
-		""" Get PV and output limits. """
+		""" Get output limits. """
 		
 		self.__write("gl")
-		return self.__readb(4)
+		return self.__readb(2)
 
 	def get_constants(self):
 		""" Get calculation constants sampling time and scaling factor. """
@@ -208,10 +207,10 @@ class tinyPID (object):
 		
 		self.__write("sy", y)
 		
-	def set_limits(self, xmin=0, xmax=255, ymin=0, ymax=255):
-		""" Set PV and output limits. """
+	def set_limits(self, ymin=0, ymax=255):
+		""" Set output limits. """
 		
-		self.__write("sl", xmin, xmax, ymin, ymax)
+		self.__write("sl", ymin, ymax)
 
 	def auto(self):
 		""" Set to automatic mode. """
@@ -255,13 +254,9 @@ class tinyPID (object):
 		elif name == "e":
 			return self.w-self.x
 		
-		elif name in ("xmax, xmin, ymax, ymin, pvmax, pvmin, outmax, outmin"):
-			xmin, xmax, ymin, ymax = self.get_limits()
-			if name in ("xmin, pvmin"):
-				return xmin
-			elif name in ("xmax, pvmax"):
-				return xmax
-			elif name in ("ymin", "outmin"):
+		elif name in ("ymax, ymin, outmax, outmin"):
+			ymin, ymax = self.get_limits()
+			if name in ("ymin", "outmin"):
 				return ymin
 			elif name in ("ymax", "outmax"):
 				return ymax
@@ -299,18 +294,14 @@ class tinyPID (object):
 			else:
 				raise AttributeError("opmode must be 'a', 'm' or 'o'")
 			
-		elif name in ("xmax, xmin, ymax, ymin, pvmax, pvmin, outmax, outmin"):
-			xmin, xmax, ymin, ymax = self.get_limits()
-			if name in ("xmin, pvmin"):
-				xmin = value
-			elif name in ("xmax, pvmax"):
-				xmax = value
-			elif name in ("ymin", "outmin"):
+		elif name in ("ymax, ymin, outmax, outmin"):
+			ymin, ymax = self.get_limits()
+			if name in ("ymin", "outmin"):
 				ymin = value
 			elif name in ("ymax", "outmax"):
 				ymax = value
 			
-			self.set_limits(xmin, xmax, ymin, ymax)
+			self.set_limits(ymin, ymax)
 		
 		else:
 			object.__setattr__(self, name, value)

@@ -5,8 +5,6 @@
 
 volatile uint8_t sampleflag = 0;
 
-uint8_t  eePvmin EEMEM    = 0;
-uint8_t  eePvmax EEMEM    = 255;
 uint8_t  eeOutmin EEMEM   = 0;
 uint8_t  eeOutmax EEMEM   = 255;
 uint8_t  eeSetpoint EEMEM = 0;
@@ -15,7 +13,7 @@ uint16_t eeP_factor EEMEM = 0;
 uint16_t eeI_factor EEMEM = 0;
 uint16_t eeD_factor EEMEM = 0;
 
-piddata_t piddata = {0,0,0,0,MANUAL,0,0,255,0,255,0,0};
+piddata_t piddata = {0,0,0,0,MANUAL,0,0,255,0,0};
 
 
 ISR(WDT_vect)
@@ -62,24 +60,10 @@ void init_pid()
     sei();
 }
 
-// limit process value and stretch to fullscale 0..255
-uint8_t scale_pv(uint8_t pv)
-{
-	if (pv > piddata.pvmax)
-		pv = piddata.pvmax;
-	else if (pv < piddata.pvmin)
-		pv = piddata.pvmin;
-	
-	pv -= piddata.pvmin;
-	return (uint8_t) ((pv * 255)/(piddata.pvmax - piddata.pvmin));
-}
-
 void pid_run()
 {
-	uint8_t x = pid_read_pv();
-	
     piddata.last_pv = piddata.processvalue;
-	piddata.processvalue = scale_pv(x);
+	piddata.processvalue = pid_read_pv();
 
     if (sampleflag == 1 && piddata.opmode == AUTO) {
 		sampleflag = 0;
@@ -115,10 +99,9 @@ void pid_save_parameters()
     eeprom_write_byte(&eeSetpoint, piddata.setpoint);
     eeprom_write_byte(&eeOpmode,   piddata.opmode);
 	
-	eeprom_write_byte(&eePvmin,    piddata.pvmin);
-	eeprom_write_byte(&eePvmax,    piddata.pvmax);
 	eeprom_write_byte(&eeOutmin,   piddata.outmin);
 	eeprom_write_byte(&eeOutmax,   piddata.outmax);
+
 }
 
 void pid_load_parameters()
@@ -130,8 +113,6 @@ void pid_load_parameters()
     piddata.opmode   = eeprom_read_byte(&eeOpmode);
     piddata.setpoint = eeprom_read_byte(&eeSetpoint);
 	
-	piddata.pvmin    = eeprom_read_byte(&eePvmin);
-	piddata.pvmax    = eeprom_read_byte(&eePvmax);
 	piddata.outmin   = eeprom_read_byte(&eeOutmin);
 	piddata.outmax   = eeprom_read_byte(&eeOutmax);
 }
