@@ -1,6 +1,5 @@
 * dokumentiere P_factor, etc in regleralgorithmus!
 * pid.c bereinigen und struktur verfeinern (globale variablen etc.)
-* pv-scaling intelligent implementieren…
 
 * megaPID: mehrere Regler auf einem Mega, dazu strukturen in pid.c anpassen 
   (mehrere structs mit den reglerdaten, funktionen passendes struct übergeben)

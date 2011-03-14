@@ -32,7 +32,9 @@
     D_factor - Kd/Ts * SCALING_FACTOR
     x - process value)
     
-   It's possible to limit the output value.
+   It's possible to limit the output value. It's also possible to limit the
+   input (process value) and scale it to 0..255. pvmin, pvmax and pvscale must
+   be given by the user. pvscale = SCALING_FACTOR * 255/(pvmax-pvmin).
    
 */
 
