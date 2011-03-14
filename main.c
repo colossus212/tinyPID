@@ -44,7 +44,6 @@
 
 int main()
 {
-	char c;
     init_periph();
 	init_cli();
 	init_pid();
