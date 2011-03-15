@@ -2,7 +2,7 @@ from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 from tinyPID import *
 from tinypidqtui import *
-import time
+import time, json, os.path
 
 class tinyPIDqt (QMainWindow, Ui_MainWindow):
 	
@@ -10,21 +10,31 @@ class tinyPIDqt (QMainWindow, Ui_MainWindow):
 		super(tinyPIDqt, self).__init__(parent)
 		self.setupUi(self)
 		
-		self.settings = QSettings("moware", "tinyPIDqt")
-		self.restoreGeometry(self.settings.value("ui/Geometry").toByteArray())
-				
-		self.timer = QTimer()
-		self.timer.setInterval(self.settings.value("com/Update", 1).toDouble()[0]*1000)
-		
 		self.pid = None
+		self.newparameters = False
+		self.lastsetpoint = None
+		self.lastoutput = None
+		self.settings = QSettings("moware", "tinyPIDqt")
 		
-		self.connect(self.timer, SIGNAL("timeout()"), self.update)
+		
+		### Timers 
+		self.sendtimer    = QTimer()
+		self.sendtimer.setInterval(1000)
+		self.updatetimer = QTimer()
+		self.updatetimer.setInterval(self.settings.value("com/Update", 1).toDouble()[0]*1000)
+		
+		
+		### Qt Signals
+		self.connect(self.sendtimer, SIGNAL("timeout()"), self.sendValues)
+		self.connect(self.updatetimer, SIGNAL("timeout()"), self.update)
 
 		self.connect(self.updateDoubleSpinBox, SIGNAL("valueChanged(double)"), \
-			lambda x: self.timer.setInterval(x*1000))
+			lambda x: self.updatetimer.setInterval(x*1000))
 
-		self.connect(self, SIGNAL("connected(bool)"), lambda x: x and self.timer.start())
-		self.connect(self, SIGNAL("connected(bool)"), lambda x: x or self.timer.stop())
+		self.connect(self, SIGNAL("connected(bool)"), lambda x: x and self.updatetimer.start())
+		self.connect(self, SIGNAL("connected(bool)"), lambda x: x  or self.updatetimer.stop())
+		self.connect(self, SIGNAL("connected(bool)"), lambda x: x and self.sendtimer.start())
+		self.connect(self, SIGNAL("connected(bool)"), lambda x: x  or self.sendtimer.stop())
 		self.connect(self, SIGNAL("connected(bool)"), lambda x: x and self.connectPidSignals())
 		self.connect(self, SIGNAL("connected(bool)"), lambda x: x and self.resetParameters())	
 		self.connect(self, SIGNAL("connected(bool)"), lambda x: x and self.resetScales())	
@@ -47,11 +57,14 @@ class tinyPIDqt (QMainWindow, Ui_MainWindow):
 		self.connect(self.ParameterButtonBox, SIGNAL("clicked(QAbstractButton*)"), \
 			lambda x: x.text() == "Reset" and self.resetParameters())
 		
-		
 		self.connect(self.autoRadioButton, SIGNAL("toggled(bool)"), lambda x: x and self.dialSetpoint())
 		self.connect(self.manRadioButton, SIGNAL("toggled(bool)"), lambda x: x and self.dialOutput())
 
-
+		self.connect(self.fileButton, SIGNAL("clicked()"), self.saveParametersToFile)
+		self.connect(self.loadButton, SIGNAL("clicked()"), self.loadParametersFromFile)
+		
+		### Restore settings and populate widgets
+		self.restoreGeometry(self.settings.value("ui/Geometry").toByteArray())
 		self.toolBox.setCurrentIndex(self.settings.value("ui/Toolbox", 0).toInt()[0])
 		self.portLineEdit.setText(self.settings.value("com/Port", "/dev/ttyUSB0").toString())
 		self.speedLineEdit.setText(self.settings.value("com/Baud", 19200).toString())
@@ -68,15 +81,22 @@ class tinyPIDqt (QMainWindow, Ui_MainWindow):
 			self.connectPID()
 	
 	
+	
 	def connectPidSignals(self):
+		"""
+		Qt signals to connect only when there's communication with the controller.
+		"""
+		
 		self.connect(self.eepromButton, SIGNAL("toggled(bool)"), lambda x: x and self.pid.save())
 		self.connect(self.autoRadioButton, SIGNAL("toggled(bool)"), lambda x: x and self.pid.auto())
 		self.connect(self.manRadioButton, SIGNAL("toggled(bool)"), lambda x: x and self.pid.manual())
 		
-		self.connect(self.setpoint, SIGNAL("valueChanged(int)"), self.updateSP)
-
 		
 	def connectPID(self):
+		"""
+		Setup communication with the controller.
+		"""
+		
 		try:
 			if self.sender() == self.connectButton:
 				port = self.portLineEdit.text()
@@ -99,10 +119,21 @@ class tinyPIDqt (QMainWindow, Ui_MainWindow):
 			y = self.pid.y
 			m = self.pid.opmode
 			self.initValues(w, x, y, m)
+			
+			# loaded parameters before, now set them
+			if self.newparameters == True:
+				self.setScales()
+				self.setParameters()
+				self.newparameters = False
 	
 	
 	def initValues(self, w=0, x=0, y=0, m='m'):
+		"""
+		Initialize widgets with some values.
+		"""
 		
+		self.lastsetpoint = w
+		self.lastoutput = y
 		self.setpoint.setValue(w)
 		self.setpointLabel.setText(str(self.setpoint.value()))
 		self.output.setValue(y)
@@ -122,6 +153,11 @@ class tinyPIDqt (QMainWindow, Ui_MainWindow):
 		
 		
 	def update(self):
+		""" 
+		Updates mode, process value etc. with data from device.
+		Called by self.updatetimer.
+		"""
+		
 		if self.pid is None:
 			return
 			
@@ -135,17 +171,34 @@ class tinyPIDqt (QMainWindow, Ui_MainWindow):
 			self.output.setValue(self.pid.y)
 		elif opmode == 'm':
 			self.manRadioButton.toggle()
-			self.pid.y = self.output.value()
 
 	
-	def updateSP(self, w):
+	def sendValues(self):
+		""" 
+		Send output or setpoint to device, if changed. 
+		Called by self.sendtimer every second.
+		"""
+		
 		if self.pid is None:
 			return
-		
-		self.pid.w = self.setpoint.value()
-	
+			
+		if self.autoRadioButton.isChecked():
+			if self.setpoint.value() != self.lastsetpoint:
+				self.pid.w = self.setpoint.value()
+				self.lastsetpoint = self.pid.w
+				print "Set setpoint to", self.lastsetpoint
+		else:
+			if self.output.value() != self.lastoutput:
+				self.pid.y = self.output.value()
+				self.lastoutput = self.pid.y
+				print "Set output to", self.lastoutput
+				
 	
 	def dialSetpoint(self):
+		"""
+		Setup the Dial to set the setpoint. Change label and signals accordingly.
+		"""
+		
 		self.dialLabel.setText("setpoint")
 		self.disconnect(self.dial, SIGNAL("valueChanged(int)"), self.output.setValue)
 		self.disconnect(self.output, SIGNAL("valueChanged(int)"), self.dial.setValue)
@@ -154,6 +207,10 @@ class tinyPIDqt (QMainWindow, Ui_MainWindow):
 	
 	
 	def dialOutput(self):
+		"""
+		Setup the Dial to set the output. Change label and signals accordingly.
+		"""
+		
 		self.dialLabel.setText("output")
 		self.disconnect(self.dial, SIGNAL("valueChanged(int)"), self.setpoint.setValue)
 		self.disconnect(self.setpoint, SIGNAL("valueChanged(int)"), self.dial.setValue)
@@ -162,6 +219,10 @@ class tinyPIDqt (QMainWindow, Ui_MainWindow):
 		
 		
 	def resetParameters(self):
+		"""
+		Reset the display of controller parameters to those on the device.
+		"""
+		
 		if self.pid is None:
 			return
 			
@@ -171,6 +232,10 @@ class tinyPIDqt (QMainWindow, Ui_MainWindow):
 	
 	
 	def setParameters(self):
+		"""
+		Set new controller parameters.
+		"""
+		
 		if self.pid is None:
 			return
 			
@@ -181,6 +246,10 @@ class tinyPIDqt (QMainWindow, Ui_MainWindow):
 	
 	
 	def resetScales(self):
+		"""
+		Reset display of PV scale and output limits to those on the device.
+		"""
+		
 		if self.pid is None:
 			return
 			
@@ -193,6 +262,10 @@ class tinyPIDqt (QMainWindow, Ui_MainWindow):
 	
 	
 	def setScales(self):
+		"""
+		Set new PV scale and output limits.
+		"""
+		
 		if self.pid is None:
 			return
 			
@@ -200,7 +273,96 @@ class tinyPIDqt (QMainWindow, Ui_MainWindow):
 		self.pid.set_limits(self.yminSpinBox.value(), self.ymaxSpinBox.value())
 	
 	
+	def saveParametersToFile(self):
+		"""
+		Save controller parameters to a file.
+		"""
+		dn = self.settings.value("ui/Last Directory", os.path.expanduser("~")).toString()
+		fn = QFileDialog.getSaveFileName(self, "Speichern", dn)
+		if not fn:
+			return
+			
+		fp = open(str(fn),'w')
+		
+		par = {
+			"Kp": self.kpDoubleSpinBox.value(),
+			"Ki": self.kiDoubleSpinBox.value(),
+			"Kd": self.kdDoubleSpinBox.value(),
+			"Out": self.output.value(),
+			"SP": self.setpoint.value(),
+			"xmin": self.xminSpinBox.value(),
+			"xmax": self.xmaxSpinBox.value(),
+			"ymin": self.yminSpinBox.value(),
+			"ymax": self.ymaxSpinBox.value(),
+			"mode": self.autoRadioButton.isChecked() and "a" or "m",
+			"com": {
+				"port": str(self.portLineEdit.text()),
+				"speed": self.speedLineEdit.text().toInt()[0],
+				"update": self.updateDoubleSpinBox.value()
+				}
+			}
+		
+		json.dump(par, fp)
+		fp.close()
+		self.fileLabel.setText(os.path.basename(str(fn)))
+		if os.path.dirname(str(fn)) != dn:
+			self.settings.setValue("ui/Last Directory", os.path.basename(str(fn)))
+	
+	
+	def loadParametersFromFile(self):
+		"""
+		Load controller parameters from a file.
+		"""
+		dn = self.settings.value("ui/Last Directory", os.path.expanduser("~")).toString()
+		fn = QFileDialog.getOpenFileName(self, "Laden", dn)
+		if not fn:
+			return
+		
+		fp = open(str(fn), 'r')
+		par = json.load(fp)
+		com = par['com']
+		
+		print par
+		
+		fp.close()
+
+		self.fileLabel.setText(os.path.basename(str(fn)))
+		if os.path.dirname(str(fn)) != dn:
+			self.settings.setValue("ui/Last Directory", os.path.basename(str(fn)))
+		
+		self.portLineEdit.setText(com['port'])
+		self.speedLineEdit.setText(str(com['speed']))
+		self.updateDoubleSpinBox.setValue(com['update'])
+		
+		self.setpoint.setValue(par['SP'])
+		self.kpDoubleSpinBox.setValue(par['Kp'])
+		self.kiDoubleSpinBox.setValue(par['Ki'])
+		self.kdDoubleSpinBox.setValue(par['Kd'])
+		
+		self.xminSpinBox.setValue(par['xmin'])
+		self.xmaxSpinBox.setValue(par['xmax'])
+		self.yminSpinBox.setValue(par['ymin'])
+		self.ymaxSpinBox.setValue(par['ymax'])
+		
+		if par['mode'] == 'a':
+			self.autoRadioButton.toggle()
+		else:
+			self.manRadioButton.toggle()
+			self.output.setValue(par['Out'])
+		
+		self.newparameters = True
+		
+		self.setScales()
+		self.setParameters()
+		
+	
+	
 	def closeEvent(self, event):
+		"""
+		Before closing the main window, save some settings and last controller
+		values.
+		"""
+		
 		self.settings.setValue("com/Port", self.portLineEdit.text())
 		self.settings.setValue("com/Baud", self.speedLineEdit.text().toInt()[0])
 		self.settings.setValue("com/Auto", self.connectCheckBox.isChecked())

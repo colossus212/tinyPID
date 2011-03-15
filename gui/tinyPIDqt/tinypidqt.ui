@@ -50,26 +50,13 @@
     <property name="currentIndex">
      <number>0</number>
     </property>
-    <widget class="QWidget" name="page_6">
-     <property name="geometry">
-      <rect>
-       <x>0</x>
-       <y>0</y>
-       <width>191</width>
-       <height>155</height>
-      </rect>
-     </property>
-     <attribute name="label">
-      <string>Monitor</string>
-     </attribute>
-    </widget>
     <widget class="QWidget" name="page_5">
      <property name="geometry">
       <rect>
        <x>0</x>
        <y>0</y>
        <width>191</width>
-       <height>155</height>
+       <height>181</height>
       </rect>
      </property>
      <attribute name="label">
@@ -172,7 +159,7 @@
        <x>0</x>
        <y>0</y>
        <width>191</width>
-       <height>155</height>
+       <height>181</height>
       </rect>
      </property>
      <attribute name="label">
@@ -324,7 +311,7 @@ p, li { white-space: pre-wrap; }
        <x>0</x>
        <y>0</y>
        <width>191</width>
-       <height>155</height>
+       <height>181</height>
       </rect>
      </property>
      <attribute name="label">
@@ -434,7 +421,7 @@ p, li { white-space: pre-wrap; }
        <x>0</x>
        <y>0</y>
        <width>191</width>
-       <height>155</height>
+       <height>181</height>
       </rect>
      </property>
      <attribute name="label">
@@ -445,8 +432,8 @@ p, li { white-space: pre-wrap; }
        <rect>
         <x>0</x>
         <y>10</y>
-        <width>81</width>
-        <height>52</height>
+        <width>92</width>
+        <height>97</height>
        </rect>
       </property>
       <layout class="QVBoxLayout" name="verticalLayout_4">
@@ -464,6 +451,20 @@ p, li { white-space: pre-wrap; }
          </property>
         </widget>
        </item>
+       <item>
+        <widget class="QPushButton" name="loadButton">
+         <property name="text">
+          <string>Laden</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QLabel" name="fileLabel">
+         <property name="text">
+          <string/>
+         </property>
+        </widget>
+       </item>
       </layout>
      </widget>
     </widget>
@@ -473,7 +474,7 @@ p, li { white-space: pre-wrap; }
        <x>0</x>
        <y>0</y>
        <width>191</width>
-       <height>155</height>
+       <height>181</height>
       </rect>
      </property>
      <attribute name="label">
