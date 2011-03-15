@@ -1,5 +1,6 @@
 * dokumentiere P_factor, etc in regleralgorithmus!
 * pid.c bereinigen und struktur verfeinern (globale variablen etc.)
 * GUI: weg mit connectPIDSignals, dafür slots für diese, dort wird self.pid überprüft
+* GUI: disconnect überprüfen? user-disconnect?
 * megaPID: mehrere Regler auf einem Mega, dazu strukturen in pid.c anpassen 
   (mehrere structs mit den reglerdaten, funktionen passendes struct übergeben)
