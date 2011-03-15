@@ -1,1 +1,1 @@
-{"Kd": 0.01, "Ki": 0.48999999999999999, "Kp": 3.0, "xmin": 0, "ymin": 0, "ymax": 255, "SP": 128, "mode": "a", "xmax": 255, "com": {"speed": 19200, "port": "/dev/ttyUSB0", "update": 1.0}, "Out": 44}
+{"Kd": 0.01, "Ki": 2.9300000000000002, "Kp": 3.0, "xmin": 0, "ymin": 0, "ymax": 255, "SP": 128, "mode": "a", "xmax": 255, "com": {"speed": 19200, "port": "/dev/ttyUSB0", "update": 1.0}, "Out": 59}

@@ -24,6 +24,7 @@ def ystepresponse(pid, y0=0, y1=255, count0=500, count1=1000):
 	x = []
 	y = []
 	t = []
+	flush(pid)
 	t0 = time()
 	for i in range(count0+count1):
 		if i == count0:
@@ -41,6 +42,7 @@ def wstepresponse(pid, w0=0, w1=255, count0=500, count1=1000):
 	x = []
 	y = []
 	t = []
+	flush(pid)
 	t0 = time()
 	for i in range(count0+count1):
 		if i == count0:

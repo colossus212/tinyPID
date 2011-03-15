@@ -87,7 +87,7 @@ class tinyPIDqt (QMainWindow, Ui_MainWindow):
 		Qt signals to connect only when there's communication with the controller.
 		"""
 		
-		self.connect(self.eepromButton, SIGNAL("toggled(bool)"), lambda x: x and self.pid.save())
+		self.connect(self.eepromButton, SIGNAL("clicked()"), self.saveEEPROM)
 		self.connect(self.autoRadioButton, SIGNAL("toggled(bool)"), lambda x: x and self.pid.auto())
 		self.connect(self.manRadioButton, SIGNAL("toggled(bool)"), lambda x: x and self.pid.manual())
 		
@@ -114,6 +114,7 @@ class tinyPIDqt (QMainWindow, Ui_MainWindow):
 		else:
 			self.emit(SIGNAL("connected(bool)"), True)
 			self.connectionLabel.setText("connected.")
+			self.pid.com.readlines()
 			w = self.pid.w
 			x = self.pid.x
 			y = self.pid.y
@@ -271,6 +272,17 @@ class tinyPIDqt (QMainWindow, Ui_MainWindow):
 			
 		self.pid.set_scale(self.xminSpinBox.value(), self.xmaxSpinBox.value())
 		self.pid.set_limits(self.yminSpinBox.value(), self.ymaxSpinBox.value())
+	
+	
+	def saveEEPROM(self):
+		"""
+		Call the device's save-to-eeprom command.
+		"""
+		if self.pid is None:
+			return
+			
+		self.pid.save()
+		self.fileLabel.setText("EEPROM")
 	
 	
 	def saveParametersToFile(self):
