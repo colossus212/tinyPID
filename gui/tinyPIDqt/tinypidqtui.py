@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'tinypidqt.ui'
 #
-# Created: Tue Mar 15 10:12:31 2011
+# Created: Tue Mar 15 11:43:16 2011
 #      by: PySide uic UI code generator
 #
 # WARNING! All changes made in this file will be lost!
@@ -27,12 +27,8 @@ class Ui_MainWindow(object):
         self.toolBox.setFrameShape(QtGui.QFrame.NoFrame)
         self.toolBox.setFrameShadow(QtGui.QFrame.Raised)
         self.toolBox.setObjectName("toolBox")
-        self.page_6 = QtGui.QWidget()
-        self.page_6.setGeometry(QtCore.QRect(0, 0, 191, 155))
-        self.page_6.setObjectName("page_6")
-        self.toolBox.addItem(self.page_6, "")
         self.page_5 = QtGui.QWidget()
-        self.page_5.setGeometry(QtCore.QRect(0, 0, 100, 30))
+        self.page_5.setGeometry(QtCore.QRect(0, 0, 191, 181))
         self.page_5.setObjectName("page_5")
         self.layoutWidget = QtGui.QWidget(self.page_5)
         self.layoutWidget.setGeometry(QtCore.QRect(0, 70, 141, 31))
@@ -77,7 +73,7 @@ class Ui_MainWindow(object):
         self.formLayout_6.setWidget(1, QtGui.QFormLayout.FieldRole, self.output)
         self.toolBox.addItem(self.page_5, "")
         self.page_2 = QtGui.QWidget()
-        self.page_2.setGeometry(QtCore.QRect(0, 0, 100, 30))
+        self.page_2.setGeometry(QtCore.QRect(0, 0, 191, 181))
         self.page_2.setObjectName("page_2")
         self.formLayoutWidget_2 = QtGui.QWidget(self.page_2)
         self.formLayoutWidget_2.setGeometry(QtCore.QRect(0, 0, 91, 80))
@@ -134,7 +130,7 @@ class Ui_MainWindow(object):
         self.ParameterButtonBox.setObjectName("ParameterButtonBox")
         self.toolBox.addItem(self.page_2, "")
         self.page_4 = QtGui.QWidget()
-        self.page_4.setGeometry(QtCore.QRect(0, 0, 100, 30))
+        self.page_4.setGeometry(QtCore.QRect(0, 0, 191, 181))
         self.page_4.setObjectName("page_4")
         self.formLayoutWidget_4 = QtGui.QWidget(self.page_4)
         self.formLayoutWidget_4.setGeometry(QtCore.QRect(0, 0, 101, 111))
@@ -175,7 +171,7 @@ class Ui_MainWindow(object):
         self.ScaleButtonBox.setObjectName("ScaleButtonBox")
         self.toolBox.addItem(self.page_4, "")
         self.page_3 = QtGui.QWidget()
-        self.page_3.setGeometry(QtCore.QRect(0, 0, 191, 155))
+        self.page_3.setGeometry(QtCore.QRect(0, 0, 191, 181))
         self.page_3.setObjectName("page_3")
         self.layoutWidget2 = QtGui.QWidget(self.page_3)
         self.layoutWidget2.setGeometry(QtCore.QRect(0, 10, 92, 97))
@@ -196,7 +192,7 @@ class Ui_MainWindow(object):
         self.verticalLayout_4.addWidget(self.fileLabel)
         self.toolBox.addItem(self.page_3, "")
         self.page = QtGui.QWidget()
-        self.page.setGeometry(QtCore.QRect(0, 0, 100, 30))
+        self.page.setGeometry(QtCore.QRect(0, 0, 191, 181))
         self.page.setObjectName("page")
         self.layoutWidget3 = QtGui.QWidget(self.page)
         self.layoutWidget3.setGeometry(QtCore.QRect(0, 0, 139, 148))
@@ -321,7 +317,7 @@ class Ui_MainWindow(object):
         self.menubar.addAction(self.menuTinyPID.menuAction())
 
         self.retranslateUi(MainWindow)
-        self.toolBox.setCurrentIndex(4)
+        self.toolBox.setCurrentIndex(0)
         QtCore.QObject.connect(self.actionBeenden, QtCore.SIGNAL("triggered()"), MainWindow.close)
         QtCore.QObject.connect(self.autoRadioButton, QtCore.SIGNAL("toggled(bool)"), self.output.setDisabled)
         QtCore.QObject.connect(self.manRadioButton, QtCore.SIGNAL("toggled(bool)"), self.output.setEnabled)
@@ -331,7 +327,6 @@ class Ui_MainWindow(object):
 
     def retranslateUi(self, MainWindow):
         MainWindow.setWindowTitle(QtGui.QApplication.translate("MainWindow", "tinyPID", None, QtGui.QApplication.UnicodeUTF8))
-        self.toolBox.setItemText(self.toolBox.indexOf(self.page_6), QtGui.QApplication.translate("MainWindow", "Monitor", None, QtGui.QApplication.UnicodeUTF8))
         self.autoRadioButton.setText(QtGui.QApplication.translate("MainWindow", "auto", None, QtGui.QApplication.UnicodeUTF8))
         self.manRadioButton.setText(QtGui.QApplication.translate("MainWindow", "manuell", None, QtGui.QApplication.UnicodeUTF8))
         self.label_3.setText(QtGui.QApplication.translate("MainWindow", "SP:", None, QtGui.QApplication.UnicodeUTF8))
