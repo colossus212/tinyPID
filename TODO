@@ -1,6 +1,16 @@
+FIRMWARE
 * dokumentiere P_factor, etc in regleralgorithmus!
+* update mindmaps
+* cleanup code, documentation
 * pid.c bereinigen und struktur verfeinern (globale variablen etc.)
+* mit geringerer baudrate testen (fehler 128?)
+
+UI
+* serial timeout verringern
 * GUI: weg mit connectPIDSignals, dafür slots für diese, dort wird self.pid überprüft
-* GUI: disconnect überprüfen? user-disconnect?
+* disconnect überprüfen? user-disconnect?
+* simple gui „Regler“? nur setpoint/output und monitoring?
+
+IDEEN
 * megaPID: mehrere Regler auf einem Mega, dazu strukturen in pid.c anpassen 
   (mehrere structs mit den reglerdaten, funktionen passendes struct übergeben)
