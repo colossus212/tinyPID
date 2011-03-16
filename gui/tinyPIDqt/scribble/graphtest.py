@@ -26,7 +26,7 @@ greenpen.setJoinStyle(Qt.RoundJoin)
 greenpen.setCapStyle(Qt.RoundCap)
 
 
-class Curve(QGraphicsPathItem):
+class Curve (QGraphicsPathItem):
 	
 	def __init__(self, name, pen, *args, **kwargs):
 		super(Curve, self).__init__(QPainterPath(), *args, **kwargs)
@@ -72,23 +72,13 @@ class Curve(QGraphicsPathItem):
 		return self.path().length()
 		
 
-
-class graphtest (QMainWindow, Ui_Form):
+class Plotter (QGraphicsScene):
 	
-	def __init__(self, parent=None):
-		super(graphtest, self).__init__(parent)
-		self.setupUi(self)
+	def __init__(self, *args, **kwargs):
+		super(Plotter, self).__init__(*args, **kwargs)
 		
+		self.t = 0
 		self.t0 = time.time()
-		self.t  = 0
-		
-		self.scene = QGraphicsScene()
-		self.graphicsView.setScene(self.scene)
-		self.graphicsView.scale(.9, .9)
-		
-		self.linespen = QPen()
-		self.linespen.setWidth(0)
-		self.linespen.setBrush(Qt.gray)
 		
 		self.timer = QTimer()
 		self.timer.setInterval(500)
@@ -102,6 +92,7 @@ class graphtest (QMainWindow, Ui_Form):
 	
 	def time(self):
 		self.t = (time.time() - self.t0) * 50
+	
 	
 	def addpoint(self):
 	
@@ -131,6 +122,26 @@ class graphtest (QMainWindow, Ui_Form):
 			self.curves[name].cropLeft(self.graphicsView.mapToScene(0,0).x())
 			self.graphicsView.centerOn(self.t, y)
 			print name, self.curves[name].count()
+
+
+
+class graphtest (QMainWindow, Ui_Form):
+	
+	def __init__(self, parent=None):
+		super(graphtest, self).__init__(parent)
+		self.setupUi(self)
+		
+		self.scene = Plotter()
+		self.graphicsView.setScene(self.scene)
+		self.graphicsView.scale(.9, .9)
+		
+		self.linespen = QPen()
+		self.linespen.setWidth(0)
+		self.linespen.setBrush(Qt.gray)
+		
+		
+	
+		
 
 
 if __name__ == "__main__":
