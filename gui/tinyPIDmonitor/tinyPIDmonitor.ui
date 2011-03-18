@@ -64,7 +64,14 @@
         </widget>
        </item>
        <item row="0" column="1">
-        <widget class="QSpinBox" name="setpointSpinBox"/>
+        <widget class="QSpinBox" name="setpointSpinBox">
+         <property name="accelerated">
+          <bool>true</bool>
+         </property>
+         <property name="maximum">
+          <number>255</number>
+         </property>
+        </widget>
        </item>
        <item row="1" column="0">
         <widget class="QLabel" name="label_4">
@@ -77,7 +84,14 @@
         </widget>
        </item>
        <item row="1" column="1">
-        <widget class="QSpinBox" name="outputSpinBox"/>
+        <widget class="QSpinBox" name="outputSpinBox">
+         <property name="accelerated">
+          <bool>true</bool>
+         </property>
+         <property name="maximum">
+          <number>255</number>
+         </property>
+        </widget>
        </item>
        <item row="2" column="0">
         <widget class="QLabel" name="label">
@@ -151,14 +165,14 @@
       </property>
       <layout class="QVBoxLayout" name="verticalLayout">
        <item>
-        <widget class="QCheckBox" name="checkBox">
+        <widget class="QCheckBox" name="gridCheckBox">
          <property name="text">
           <string>Grid</string>
          </property>
         </widget>
        </item>
        <item>
-        <widget class="QCheckBox" name="checkBox_2">
+        <widget class="QCheckBox" name="autoscaleCheckBox">
          <property name="text">
           <string>Autoscale</string>
          </property>
@@ -199,6 +213,9 @@
             <number>50</number>
            </property>
            <property name="maximum">
+            <number>255</number>
+           </property>
+           <property name="value">
             <number>255</number>
            </property>
           </widget>
@@ -258,7 +275,7 @@
         <x>20</x>
         <y>10</y>
         <width>141</width>
-        <height>123</height>
+        <height>148</height>
        </rect>
       </property>
       <layout class="QVBoxLayout" name="verticalLayout_2">
@@ -318,6 +335,13 @@
         </layout>
        </item>
        <item>
+        <widget class="QCheckBox" name="connectCheckBox">
+         <property name="text">
+          <string>Autoconnect</string>
+         </property>
+        </widget>
+       </item>
+       <item>
         <widget class="QPushButton" name="connectButton">
          <property name="text">
           <string>Connect</string>
@@ -348,5 +372,142 @@
   </customwidget>
  </customwidgets>
  <resources/>
- <connections/>
+ <connections>
+  <connection>
+   <sender>gridCheckBox</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>tinyPIDmonitor</receiver>
+   <slot>gridEnable(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>655</x>
+     <y>36</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>594</x>
+     <y>14</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>autoscaleCheckBox</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>tinyPIDmonitor</receiver>
+   <slot>setAutoscale(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>682</x>
+     <y>60</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>591</x>
+     <y>62</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>yminSpinBox</sender>
+   <signal>valueChanged(int)</signal>
+   <receiver>tinyPIDmonitor</receiver>
+   <slot>setYmin(int)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>724</x>
+     <y>83</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>592</x>
+     <y>117</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>ymaxSpinBox</sender>
+   <signal>valueChanged(int)</signal>
+   <receiver>tinyPIDmonitor</receiver>
+   <slot>setYmax(int)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>734</x>
+     <y>112</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>592</x>
+     <y>175</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>viewsizeSpinBox</sender>
+   <signal>valueChanged(int)</signal>
+   <receiver>tinyPIDmonitor</receiver>
+   <slot>setView(int)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>706</x>
+     <y>134</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>591</x>
+     <y>217</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>scrollSpinBox</sender>
+   <signal>valueChanged(int)</signal>
+   <receiver>tinyPIDmonitor</receiver>
+   <slot>setScroll(int)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>747</x>
+     <y>160</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>590</x>
+     <y>269</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>autoRadioButton</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>outputSpinBox</receiver>
+   <slot>setDisabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>741</x>
+     <y>37</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>704</x>
+     <y>54</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>manRadioButton</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>outputSpinBox</receiver>
+   <slot>setEnabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>756</x>
+     <y>69</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>702</x>
+     <y>66</y>
+    </hint>
+   </hints>
+  </connection>
+ </connections>
+ <slots>
+  <slot>gridEnable(bool)</slot>
+  <slot>setView(int)</slot>
+  <slot>setScroll(int)</slot>
+  <slot>setYmin(int)</slot>
+  <slot>setYmax(int)</slot>
+  <slot>setAutoscale(bool)</slot>
+ </slots>
 </ui>
