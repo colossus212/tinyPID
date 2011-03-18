@@ -57,12 +57,14 @@ uint8_t testchar(char expected, char received)
 	return (expected == received || expected == (received - 128));
 }
 
+/* Send an unsigned 16bit int as two bytes. */
 void put_word(uint16_t word)
 {
 	softuart_putchar((uint8_t) (word >> 8));
 	softuart_putchar((uint8_t) (word & 0xFF));
 }
 
+/* Receive two bytes and put them together to a 16bit value. */
 uint16_t get_word()
 {
 	char lsb, msb;
@@ -73,12 +75,14 @@ uint16_t get_word()
 	return (uint16_t) ((msb<<8) + lsb);
 }
 
+/* Initialize command-line interface. */
 void init_cli()
 {
     softuart_init();
     sei();
 }
 
+/* Receive commands and perform corresponding actions. */
 void command_loop()
 {
 	char c;

@@ -18,7 +18,7 @@ uint16_t eeD_factor EEMEM = 0;
 
 piddata_t piddata = {0,0,0,0,MANUAL,0,0,255,0,255,SCALING_FACTOR,0,0};
 
-
+/* Sampling IRQ */
 ISR(WDT_vect)
 {
 	// keep WDT from resetting, interrupt instead
@@ -26,6 +26,7 @@ ISR(WDT_vect)
     sampleflag = 1;
 }
 
+/* Setup needed hardware */
 void init_periph()
 {
     cli();
@@ -55,6 +56,7 @@ void init_periph()
     sei();
 }
 
+/* Initialize PID controller, reset output and load parameters. */
 void init_pid()
 {
     cli();
@@ -63,6 +65,7 @@ void init_pid()
     sei();
 }
 
+/* Run the controller. */
 void pid_run()
 {
     piddata.last_pv = piddata.processvalue;
@@ -74,18 +77,21 @@ void pid_run()
 	}
 }
 
+/* Set automatic mode (controlling). */
 void pid_auto()
 {
 	pid_reset();
 	piddata.opmode = AUTO;
 }
 
+/* Set manual mode (user sets the output). */
 void pid_manual()
 {
 	pid_reset();
 	piddata.opmode = MANUAL;
 }
 
+/* Reset algorithm data. */
 void pid_reset() 
 {
     piddata.esum = 0;
@@ -93,6 +99,7 @@ void pid_reset()
     piddata.processvalue = 0;
 }
 
+/* Save controller parameters and data to EEPROM. */
 void pid_save_parameters()
 {
     eeprom_write_word(&eeP_factor, piddata.P_factor);
@@ -110,6 +117,7 @@ void pid_save_parameters()
 
 }
 
+/* Load controller parameters and data from EEPROM. */
 void pid_load_parameters()
 {
     piddata.P_factor = eeprom_read_word(&eeP_factor);
@@ -126,6 +134,7 @@ void pid_load_parameters()
 	piddata.outmax   = eeprom_read_byte(&eeOutmax);
 }
 
+/* Algorithm function. The calculation happens here. */
 void pid_contr()
 {
 	int16_t e;
@@ -171,6 +180,7 @@ void pid_contr()
 
 }
 
+/* Set and output value. */
 void pid_set_output(int32_t y)
 {
     if (y > piddata.outmax) 
@@ -181,11 +191,13 @@ void pid_set_output(int32_t y)
         PWM = (uint8_t) y;
 }
 
+/* Return the current output value. */
 uint8_t pid_get_output()
 {
     return PWM;
 }
 
+/* Read the process value (ADC routine) and scale it. */
 uint8_t pid_read_pv()
 {
     uint16_t a = 0;
@@ -207,6 +219,7 @@ uint8_t pid_read_pv()
     return scale_pv((uint8_t) a);
 }
 
+/* Scale the process value according to pvmin, pvmax and pvscale settings. */
 uint8_t scale_pv(uint8_t adc)
 {
 	uint32_t pv = 0;
