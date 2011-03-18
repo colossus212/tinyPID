@@ -170,6 +170,8 @@ class tinyPIDmonitor (QMainWindow, Ui_tinyPIDmonitor):
 			
 		
 	def updateData(self):
+		""" Get data from the controller and update plot and gui. """
+		
 		# gather data
 		self.t.append(time.time()-self.t0)
 		
@@ -220,7 +222,8 @@ class tinyPIDmonitor (QMainWindow, Ui_tinyPIDmonitor):
 	
 	
 	def sendData(self):
-		print "ping"
+		""" Send new settings to controller in case sth. has changed. """
+		print "sending"
 		if self.pid is None:
 			return
 		
@@ -242,17 +245,8 @@ class tinyPIDmonitor (QMainWindow, Ui_tinyPIDmonitor):
 		self.connect(self.manRadioButton, SIGNAL("toggled(bool)"), lambda x: x and self.pid.manual())
 	
 	
-	def disconnectPID(self):
-		print "disconnecting"
-		self.pid = None
-		self.emit(SIGNAL("connected(bool)"), False)
-		self.connectLabel.setText("not connected.")
-	
-	
 	def connectPID(self):
-		"""
-		Setup communication with the controller.
-		"""
+		"""	Setup communication with the controller. """
 		
 		try:
 			if self.sender() == self.connectButton:
@@ -277,11 +271,15 @@ class tinyPIDmonitor (QMainWindow, Ui_tinyPIDmonitor):
 				self.manRadioButton.toggle()
 	
 	
+	def disconnectPID(self):
+		print "disconnecting"
+		self.pid = None
+		self.emit(SIGNAL("connected(bool)"), False)
+		self.connectLabel.setText("not connected.")
+	
+	
 	def closeEvent(self, event):
-		"""
-		Before closing the main window, save some settings and last controller
-		values.
-		"""
+		""" Before closing the main window, save settings. """
 		
 		self.settings.setValue("com/Port", self.portLineEdit.text())
 		self.settings.setValue("com/Baud", self.speedLineEdit.text().toInt()[0])
