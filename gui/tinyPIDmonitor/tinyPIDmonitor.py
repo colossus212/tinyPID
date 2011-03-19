@@ -120,7 +120,7 @@ class tinyPIDmonitor (QMainWindow, Ui_tinyPIDmonitor):
 		else:
 			print "stop timers"
 			self.updatetimer.stop()
-			self.updatetimer.start()
+			self.sendtimer.stop()
 	
 		
 	def gridEnable(self, enable):
