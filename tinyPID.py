@@ -8,6 +8,7 @@
 #
 
 import serial
+from time import sleep
 
 SAMPLING_TIME  = 16e-3 # both can be updated
 SCALING_FACTOR = 128   # by calling tinyPID.get_constants()
@@ -125,7 +126,8 @@ class tinyPID (object):
 	info():          print out most of the PID data
 	log(interval):   continuously get and print setpoint, 
 					  process value, output and error
-
+	flush():         flush the serial input buffer
+	
 	Attributes:
 	-----------
 	Kp, Ki, Kd: get/set PID factors
@@ -351,6 +353,11 @@ class tinyPID (object):
 				sleep(interval)
 		except KeyboardInterrupt:
 			return
+	
+	
+	def flush(self):
+		""" Flush the serial input buffer. """
+		self.com.readlines()
 	
 	
 	def __getattr__(self, name):
