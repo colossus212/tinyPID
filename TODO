@@ -1,11 +1,10 @@
 FIRMWARE
-* dokumentiere P_factor, etc in regleralgorithmus!
-* update mindmaps
 * cleanup code, documentation
 * pid.c bereinigen und struktur verfeinern (globale variablen etc.)
 * mit geringerer baudrate testen (fehler 128?)
 
 UI
+* GUI: plot von tinyPIDmonitor in tinyPIDqt einfügen!
 * serial timeout verringern
 * GUI: weg mit connectPIDSignals, dafür slots für diese, dort wird self.pid überprüft
 * disconnect überprüfen? user-disconnect?
