@@ -214,8 +214,6 @@ class tinyPIDmonitor (QMainWindow, Ui_tinyPIDmonitor):
 			self.axmax = self.axmax + self.view*self.step
 			self.qwtPlot.setAxisScale(QwtPlot.xBottom, self.axmin, self.axmax)
 			
-		print "Points:", len(self.t)+len(self.w,)+len(self.x)+len(self.y),
-		
 		# replot
 		self.qwtPlot.replot()
 	
