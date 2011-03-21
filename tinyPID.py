@@ -9,8 +9,8 @@
 
 import serial
 
-SAMPLING_TIME  = 16e-3
-SCALING_FACTOR = 128
+SAMPLING_TIME  = 16e-3 # both can be updated
+SCALING_FACTOR = 128   # by calling tinyPID.get_constants()
 
 
 def to_word(msb, lsb):
