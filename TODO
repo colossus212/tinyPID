@@ -5,6 +5,9 @@ FIRMWARE
 
 UI
 * GUI: plot von tinyPIDmonitor in tinyPIDqt einfügen!
+* GUI: anzeigeskala: alle werte in Bereich/Einheit umrechnen und darstellen,
+   user input: einheit, min, max
+   default: prozent
 * serial timeout verringern
 * GUI: weg mit connectPIDSignals, dafür slots für diese, dort wird self.pid überprüft
 * disconnect überprüfen? user-disconnect?
