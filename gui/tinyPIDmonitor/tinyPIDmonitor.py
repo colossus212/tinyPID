@@ -1,3 +1,4 @@
+# -*- coding: utf8 -*-
 from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 from PyQt4.Qwt5 import *
@@ -25,6 +26,8 @@ class tinyPIDmonitor (QMainWindow, Ui_tinyPIDmonitor):
 		self.axmax = self.view
 		self.step  = 0
 		
+		self.units = ["%", "%"]
+		
 		self.pid = None
 		self.settings = QSettings("moware", "tinyPIDmonitor")
 		self.restoreGeometry(self.settings.value("ui/Geometry").toByteArray())
@@ -37,10 +40,10 @@ class tinyPIDmonitor (QMainWindow, Ui_tinyPIDmonitor):
 		self.scrollSpinBox.setValue(self.settings.value("plot/Scroll", 0).toInt()[0])
 		self.tabWidget.setCurrentIndex(self.settings.value("ui/Tab", 0).toInt()[0])
 		self.pvLabel.setText(self.settings.value("pid/PV", 0).toString())
-		self.setpointSpinBox.setValue(self.settings.value("pid/SP", 0).toInt()[0])
-		self.lastsetpoint = self.setpointSpinBox.value()
-		self.outputSpinBox.setValue(self.settings.value("pid/Output", 0).toInt()[0])
-		self.lastoutput = self.outputSpinBox.value()
+		self.setpointDoubleSpinBox.setValue(self.settings.value("pid/SP", 0).toDouble()[0])
+		self.lastsetpoint = self.setpointDoubleSpinBox.value()
+		self.outputDoubleSpinBox.setValue(self.settings.value("pid/Output", 0).toDouble()[0])
+		self.lastoutput = self.outputDoubleSpinBox.value()
 
 		self.view  = self.viewsizeSpinBox.value()
 		self.setScroll(self.scrollSpinBox.value())
@@ -75,6 +78,7 @@ class tinyPIDmonitor (QMainWindow, Ui_tinyPIDmonitor):
 		self.curve_w.updateLegend(self.legend)
 		
 		self.curve_y = QwtPlotCurve("Output")
+		self.curve_y.setYAxis(QwtPlot.yRight)
 		self.curve_y.attach(self.qwtPlot)
 		self.curve_y.setPen(ypen)
 		self.curve_y.updateLegend(self.legend)
@@ -84,11 +88,9 @@ class tinyPIDmonitor (QMainWindow, Ui_tinyPIDmonitor):
 		self.curve_x.setPen(xpen)
 		self.curve_x.updateLegend(self.legend)
 		
-		self.qwtPlot.setAxisScale(QwtPlot.yLeft, 0, 255)
-		self.qwtPlot.setAxisTitle(QwtPlot.yLeft, "")
+		self.qwtPlot.enableAxis(QwtPlot.yRight)
 		self.qwtPlot.setAxisTitle(QwtPlot.xBottom, "t/s")
-		self.qwtPlot.replot()
-		
+			
 		self.updatetimer = QTimer()
 		self.updatetimer.setInterval(self.settings.value("com/Update", 150).toInt()[0])
 		self.sendtimer = QTimer()
@@ -110,6 +112,20 @@ class tinyPIDmonitor (QMainWindow, Ui_tinyPIDmonitor):
 		
 		if self.settings.value("plot/Autoscale", False).toBool():
 			self.autoscaleCheckBox.toggle()
+		
+		self.resetDisplayScale()
+	
+	
+	def resetData(self):
+		self.updatetimer.stop()
+		self.t = []
+		self.x = []
+		self.w = []
+		self.y = []
+		self.t0 = time.time()
+		self.axmin = 0
+		self.axmax = self.view
+		self.updatetimer.start()
 	
 	
 	def startTimers(self, start):
@@ -167,8 +183,85 @@ class tinyPIDmonitor (QMainWindow, Ui_tinyPIDmonitor):
 			ymin, ymax = self.yminSpinBox.value(), self.ymaxSpinBox.value()
 			self.qwtPlot.setAxisScale(QwtPlot.yLeft, ymin, ymax)
 		self.qwtPlot.replot()
-			
 		
+		
+	def resetTimeAxis(self):
+		""" Reset the time axis. """
+		print "reset time axis"
+		if self.scrollSpinBox.value() == 0 \
+		   or len(self.t) == 0 :
+			return
+		else:
+			self.updatetimer.stop()
+			
+			t0 = self.t[0]
+			self.t0 =  time.time() - self.t[-1] + t0
+			self.t = [t-t0 for t in self.t]
+						
+			self.axmax = self.view
+			self.axmin = 0
+			self.qwtPlot.setAxisScale(QwtPlot.xBottom, self.axmin, self.axmax)
+			
+			self.updatetimer.start()
+	
+	
+	def setDisplayScale(self):
+		""" Rescale PV, SP and Output. """
+		if self.pid is None:
+			self.resetDisplayScale()
+			return
+		
+		vunit = self.sPPVUnitLineEdit.text()
+		ounit = self.outputUnitLineEdit.text()
+		vmin  = self.sPPVMinDoubleSpinBox.value()
+		vmax  = self.sPPVMaxDoubleSpinBox.value()
+		omin  = self.outputMinDoubleSpinBox.value()
+		omax  = self.outputMaxDoubleSpinBox.value()
+		
+		self.pid.display_configuration(vmin, vmax, vunit, omin, omax, ounit)
+		
+		self.resetData()
+		
+		self.setpointDoubleSpinBox.setSuffix(vunit)
+		self.outputDoubleSpinBox.setSuffix(ounit)
+		self.units = [vunit, ounit]
+		
+		self.qwtPlot.setAxisScale(QwtPlot.yLeft, vmin, vmax)
+		self.qwtPlot.setAxisTitle(QwtPlot.yLeft, "SP/PV - "+vunit)
+		self.qwtPlot.setAxisScale(QwtPlot.yRight, omin, omax)
+		self.qwtPlot.setAxisTitle(QwtPlot.yRight, "Output - "+ounit)
+		self.qwtPlot.setAxisScale(QwtPlot.xBottom, self.axmin, self.axmax)
+		
+		self.qwtPlot.replot()
+		
+		
+	def resetDisplayScale(self):
+		""" Reset PV, SP and Output scale to 0…100%. """
+		if self.pid is not None:
+			self.pid.percentage()
+			
+		self.sPPVUnitLineEdit.setText("%")
+		self.outputUnitLineEdit.setText("%")
+		self.sPPVMinDoubleSpinBox.setValue(0)
+		self.sPPVMaxDoubleSpinBox.setValue(100)
+		self.outputMinDoubleSpinBox.setValue(0)
+		self.outputMaxDoubleSpinBox.setValue(100)
+		
+		self.setpointDoubleSpinBox.setSuffix("%")
+		self.outputDoubleSpinBox.setSuffix("%")
+		self.units = ["%", "%"]
+		
+		self.resetData()
+		
+		self.qwtPlot.setAxisScale(QwtPlot.yLeft, 0, 100)
+		self.qwtPlot.setAxisTitle(QwtPlot.yLeft, "SP/PV - %")
+		self.qwtPlot.setAxisScale(QwtPlot.yRight, 0, 100)
+		self.qwtPlot.setAxisTitle(QwtPlot.yRight, "Output - %")
+		self.qwtPlot.setAxisScale(QwtPlot.xBottom, self.axmin, self.axmax)
+		
+		self.qwtPlot.replot()
+		
+	
 	def updateData(self):
 		""" Get data from the controller and update plot and gui. """
 		
@@ -186,12 +279,12 @@ class tinyPIDmonitor (QMainWindow, Ui_tinyPIDmonitor):
 		self.w.append(w)
 		
 		# update GUI
-		self.errorLabel.setText(str(self.w[-1]-self.x[-1]))
-		self.pvLabel.setText(str(self.x[-1]))
+		self.errorLabel.setText("%3.2f%s" % (self.w[-1]-self.x[-1], self.units[0]))
+		self.pvLabel.setText("%3.2f%s" % (self.x[-1], self.units[0]))
 		if self.autoRadioButton.isChecked():
-			self.outputSpinBox.setValue(self.y[-1])
+			self.outputDoubleSpinBox.setValue(self.y[-1])
 		else:
-			self.setpointSpinBox.setValue(self.w[-1])
+			self.setpointDoubleSpinBox.setValue(self.w[-1])
 		
 		# update curves
 		self.curve_w.setData(self.t, self.w)
@@ -225,13 +318,15 @@ class tinyPIDmonitor (QMainWindow, Ui_tinyPIDmonitor):
 			return
 		
 		if self.manRadioButton.isChecked():
-			if self.outputSpinBox.value() != self.lastoutput:
-				self.pid.y = self.outputSpinBox.value()
+			if abs(self.outputDoubleSpinBox.value() - self.lastoutput) > 0.01:
+				self.pid.y = self.outputDoubleSpinBox.value()
 				self.lastoutput = self.pid.y
+				self.outputDoubleSpinBox.setValue(self.lastoutput)
 		elif self.autoRadioButton.isChecked():
-			if self.setpointSpinBox.value() != self.lastsetpoint:
-				self.pid.w = self.setpointSpinBox.value()
+			if abs(self.setpointDoubleSpinBox.value() - self.lastsetpoint) > 0.01:
+				self.pid.w = self.setpointDoubleSpinBox.value()
 				self.lastsetpoint = self.pid.w
+				self.setpointDoubleSpinBox.setValue(self.lastsetpoint)
 	
 	def connectPidSignals(self):
 		"""
@@ -290,9 +385,9 @@ class tinyPIDmonitor (QMainWindow, Ui_tinyPIDmonitor):
 		self.settings.setValue("plot/ymax", self.ymaxSpinBox.value())
 		self.settings.setValue("plot/View", self.viewsizeSpinBox.value())
 		self.settings.setValue("plot/Scroll", self.scrollSpinBox.value())
-		self.settings.setValue("pid/SP", self.setpointSpinBox.value())
-		self.settings.setValue("pid/PV", self.pvLabel.text().toInt()[0])
-		self.settings.setValue("pid/Output", self.outputSpinBox.value())
+		self.settings.setValue("pid/SP", self.setpointDoubleSpinBox.value())
+		self.settings.setValue("pid/PV", self.pvLabel.text().toDouble()[0])
+		self.settings.setValue("pid/Output", self.outputDoubleSpinBox.value())
 			
 	
 		
