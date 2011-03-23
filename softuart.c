@@ -343,21 +343,21 @@ void softuart_putchar( const char ch )
 	flag_tx_busy       = SU_TRUE;
 }
 	
-void softuart_puts( const char *s )
-{
-	while ( *s ) {
-		softuart_putchar( *s++ );
-	}
-}
-	
-void softuart_puts_p( const char *prg_s )
-{
-	char c;
-
-	while ( ( c = pgm_read_byte( prg_s++ ) ) ) {
-		softuart_putchar(c);
-	}
-}
+// void softuart_puts( const char *s )
+// {
+// 	while ( *s ) {
+// 		softuart_putchar( *s++ );
+// 	}
+// }
+// 	
+// void softuart_puts_p( const char *prg_s )
+// {
+// 	char c;
+// 
+// 	while ( ( c = pgm_read_byte( prg_s++ ) ) ) {
+// 		softuart_putchar(c);
+// 	}
+// }
 
 
 

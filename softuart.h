@@ -118,12 +118,12 @@ void softuart_turn_rx_on( void );
 void softuart_turn_rx_off( void );
 
 // Write a NULL-terminated string from RAM to the serial port
-void softuart_puts( const char *s );
-
-// Write a NULL-terminated string from program-space (flash) 
-// to the serial port. example: softuart_puts_p(PSTR("test"))
-void softuart_puts_p( const char *prg_s );
-
-// Helper-Macro - "automatically" inserts PSTR
-// when used: include avr/pgmspace.h before this include-file
-#define softuart_puts_P(s___) softuart_puts_p(PSTR(s___))
+// void softuart_puts( const char *s );
+// 
+// // Write a NULL-terminated string from program-space (flash) 
+// // to the serial port. example: softuart_puts_p(PSTR("test"))
+// void softuart_puts_p( const char *prg_s );
+// 
+// // Helper-Macro - "automatically" inserts PSTR
+// // when used: include avr/pgmspace.h before this include-file
+// #define softuart_puts_P(s___) softuart_puts_p(PSTR(s___))
