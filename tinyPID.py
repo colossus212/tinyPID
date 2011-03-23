@@ -14,12 +14,16 @@ SAMPLING_TIME  = 16e-3 # both can be updated
 SCALING_FACTOR = 128   # by calling tinyPID.get_constants()
 
 
+# Utilities
+
 def to_word(msb, lsb):
 	return (msb << 8) + lsb
 
 def to_bytes(word):
 	return (word >> 8, word & 0xFF)
 
+
+# PID parameter conversions
 
 def Ki_to_Tn(kp, ki):
     if ki > 0:
@@ -43,6 +47,8 @@ def Tv_to_Kd(kp, tv):
     return kp * tv
 
 
+# Controller factor scaling
+
 def pfactor_scale(kp):
 	f = SCALING_FACTOR * kp 
 	return int(round(f))
@@ -64,6 +70,8 @@ def dfactor_scale(kd):
 def dfactor_unscale(f):
 	return f * SAMPLING_TIME/SCALING_FACTOR
 
+
+# Frontend class
 
 class tinyPID (object):
 	"""
@@ -127,6 +135,9 @@ class tinyPID (object):
 	log(interval):   continuously get and print setpoint, 
 					  process value, output and error
 	flush():         flush the serial input buffer
+	display_configuration(min, max, unit):
+				     Convert all values to a different scale and optionally append a string 'unit'
+	reset_display(): Reset the display scale to fullscale (0…255)
 	
 	Attributes:
 	-----------
@@ -142,6 +153,9 @@ class tinyPID (object):
 	ymin, ymax, outmin, outmax:
 	            get/set output limits
 	
+	displayunit: 
+	            string to append to printed values, see display_configuration()
+	
 	"""
 
 
@@ -152,6 +166,11 @@ class tinyPID (object):
 		self.com = serial.Serial(*args, **kwargs)
 		if not self.com.getTimeout():
 			self.com.setTimeout(2)
+			
+		self.__convmin = 0
+		self.__convmax = 255
+		self.__out_in_perc = False
+		self.displayunit = ''
 	
 	
 	def __del__(self):
@@ -210,6 +229,50 @@ class tinyPID (object):
 		""" Write a long number as MSB/LSB-pair. """
 		msb, lsb = to_bytes(word)
 		self.__write(msb, lsb)
+	
+	
+	def __display(self, *args):
+		""" 
+		Convert each arg to the configured display scale. 
+		See display_configuration() for more.
+		"""
+		r = []
+		factor = float(self.__convmax-self.__convmin)/255
+				
+		for a in args:
+			if a == 255:
+				r.append(self.__convmax)
+			elif a == 0:
+				r.append(self.__convmin)
+			else:
+				r.append(a * factor + self.__convmin)
+		
+		if len(r) == 1:
+			return r[0]
+		else:
+			return r
+	
+	
+	def __device(self, *args):
+		"""
+		Convert each arg back to the fullscale used on the device.
+		See display_configuration() for more.
+		"""
+		r = []
+		factor = 255/float(self.__convmax-self.__convmin)
+				
+		for a in args:
+			if a == self.__convmax:
+				r.append(255)
+			elif a == self.__convmin:
+				r.append(0)
+			else:
+				r.append(int((a - self.__convmin) * factor))
+		
+		if len(r) == 1:
+			return r[0]
+		else:
+			return r
 		
 
 	def get_mode(self):
@@ -239,25 +302,37 @@ class tinyPID (object):
 	def get_pv(self):
 		""" Get process value 'x'. """
 		self.__write("gx")
-		return self.__readb()
+		x = self.__readb()
+		return self.__display(x)
 
 
 	def get_setpoint(self):
 		""" Get setpoint 'w'. """
 		self.__write("gv")
-		return self.__readb()
+		w = self.__readb()
+		return self.__display(w)
 
 
 	def get_output(self):
 		""" Get output value 'y'. """
 		self.__write("gy")
-		return self.__readb()
+		y = self.__readb()
+		
+		if self.__out_in_perc is True:
+			return y/255. * 100
+		else:
+			return y
 
 
 	def get_limits(self):
 		""" Get output limits. """
 		self.__write("gl")
-		return self.__readb(2)
+		limits = self.__readb(2)
+		
+		if self.__out_in_perc is True:
+			return [y/255. * 100 for y in limits]
+		else:
+			return limits
 
 
 	def get_scale(self):
@@ -265,7 +340,7 @@ class tinyPID (object):
 		self.__write("gs")
 		xmin, xmax = self.__readb(2)
 		xscale = self.__readw()
-		return xmin, xmax
+		return self.__display(xmin, xmax)
 
 
 	def get_constants(self):
@@ -273,7 +348,7 @@ class tinyPID (object):
 		self.__write("gc")
 		return self.__readb(2)
 
-
+	
 	def set_Kp(self, Kp):
 		""" Set proportional factor 'Kp'. """
 		self.__write("sp")
@@ -294,21 +369,30 @@ class tinyPID (object):
 
 	def set_setpoint(self, w):
 		""" Set setpoint 'w'. """
+		w = self.__device(w)
 		self.__write("sv", w)
 
 
 	def set_output(self, y):
 		""" Set output value 'y' manually. """
+		if self.__out_in_perc is True:
+			y = y/100. * 255
+		
 		self.__write("sy", y)
 
 
-	def set_limits(self, ymin=0, ymax=255):
+	def set_limits(self, ymin, ymax):
 		""" Set output limits. """
+		if self.__out_in_perc is True:
+			ymin = ymin/100. * 255
+			ymax = ymax/100. * 255
+			
 		self.__write("sl", ymin, ymax)
 
 
-	def set_scale(self, xmin=0, xmax=255):
+	def set_scale(self, xmin, xmax):
 		""" Set PV scale. """
+		xmin, xmax = self.__device(xmin, xmax)
 		self.__write("ss", xmin, xmax)
 		self.__writew(SCALING_FACTOR * 255/(xmax-xmin))
 
@@ -339,7 +423,19 @@ class tinyPID (object):
 		m = self.opmode
 		
 		print "Kp: %2.2f \nKi: %2.2f (Tn: %2.2f) \nKd: %2.2f (Tv: %2.2f)" % (p, i, n, d, v)
-		print "w: %i \nx: %i (%i..%i) \ne: %i \ny: %i (%i..%i)" % (w, x, xmin, xmax, e, y, ymin, ymax)
+		
+		if self.__convmin == 0 and self.__convmax == 255:
+			numstring = "w: %i%s \nx: %i%s (%i..%i%s) \ne: %i%s"
+		else:
+			numstring = "w: %3.2f%s \nx: %3.2f%s (%3.2f..%3.2f%s) \ne: %3.2f%s"
+			
+		print numstring % (w, self.displayunit, x, self.displayunit, xmin, xmax, self.displayunit, e, self.displayunit)
+		
+		if self.__out_in_perc is True:
+			print "y: %i%% (%i..%i%%)" % (y, ymin, ymax)
+		else:
+			print "y: %i (%i..%i)" % (y, ymin, ymax)
+		
 		print m == 'a' and "automatic" or "manual"
 
 
@@ -349,7 +445,21 @@ class tinyPID (object):
 			while True:
 				w, x, y = self.w, self.x, self.y
 				e = w - x
-				print "w: %3i, x: %3i, y: %3i, e: %3i" % (w, x, y, e)
+				
+				string = ''
+				
+				if self.__convmin == 0 and self.__convmax == 255:
+					string = "w: %3i%s x: %3i%s e: %3i%s "
+				else:
+					string = "w: %3.2f%s x: %3.2f%s e: %3.2f%s "
+		
+				if self.__out_in_perc is True:
+					string += ("y: %3.1f%%")
+				else:
+					string += ("y: %3i")
+					
+				print string % (w, self.displayunit, x, self.displayunit, e, self.displayunit, y)
+				
 				sleep(interval)
 		except KeyboardInterrupt:
 			return
@@ -360,6 +470,39 @@ class tinyPID (object):
 		self.com.readlines()
 	
 	
+	def display_configuration(self, vmin, vmax, unit='', outperc=True):
+		"""
+		Convert and scale process value and setpoint to the interval [vmin, vmax]
+		and optionally append a unit. 
+		
+		Example: display_configuration(0, 100, '%') will convert all values to a
+		percentage and append a percent sign.
+		
+		The unit can also be changed by setting the class attribute 'displayunit'.
+		
+		Parameters:
+		-----------
+		vmin:    minimum of scale
+		vmax:    maximum of scale
+		unit:    a unit string to append
+		outperc: convert output to percentage (True, default) or fullscale (False)
+		"""
+		self.__convmin = vmin
+		self.__convmax = vmax
+		self.__out_in_perc = outperc
+		self.displayunit = unit
+	
+	
+	def reset_display(self):
+		"""
+		Reset display configuration to display fullscale values (0…255).
+		"""
+		self.__convmin = 0
+		self.__convmax = 255
+		self.__out_in_perc = False
+		self.displayunit = ''
+	
+		
 	def __getattr__(self, name):
 		if name == "Kp":
 			return self.get_Kp()
