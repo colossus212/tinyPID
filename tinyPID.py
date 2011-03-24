@@ -288,9 +288,9 @@ class tinyPID (object):
 		factor = 255/float(self.__valmax-self.__valmin)
 				
 		for a in args:
-			if a == self.__valmax:
+			if a >= self.__valmax:
 				r.append(255)
-			elif a == self.__valmin:
+			elif a <= self.__valmin:
 				r.append(0)
 			else:
 				r.append(int((a - self.__valmin) * factor))
@@ -310,9 +310,9 @@ class tinyPID (object):
 		factor = 255/float(self.__outmax-self.__outmin)
 				
 		for a in args:
-			if a == self.__outmax:
+			if a >= self.__outmax:
 				r.append(255)
-			elif a == self.__outmin:
+			elif a <= self.__outmin:
 				r.append(0)
 			else:
 				r.append(int((a - self.__outmin) * factor))
