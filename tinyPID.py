@@ -293,7 +293,8 @@ class tinyPID (object):
 			elif a <= self.__valmin:
 				r.append(0)
 			else:
-				r.append(int((a - self.__valmin) * factor))
+				a = round((a - self.__valmin) * factor)
+				r.append(int(a))
 		
 		if len(r) == 1:
 			return r[0]
@@ -315,7 +316,8 @@ class tinyPID (object):
 			elif a <= self.__outmin:
 				r.append(0)
 			else:
-				r.append(int((a - self.__outmin) * factor))
+				a = round((a - self.__outmin) * factor)
+				r.append(int(a))
 		
 		if len(r) == 1:
 			return r[0]
