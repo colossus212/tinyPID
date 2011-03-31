@@ -4,7 +4,7 @@ FIRMWARE
 * mit geringerer baudrate testen (fehler 128?)
 
 UI
-* GUI: plot von tinyPIDmonitor in tinyPIDqt einfügen!
+* GUI: merge tinyPIDmonitor with tinyPIDqt!
 * GUI: anzeigeskala: alle werte in Bereich/Einheit umrechnen und darstellen,
    user input: einheit, min, max
    default: prozent
