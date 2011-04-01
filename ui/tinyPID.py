@@ -9,6 +9,7 @@
 
 import serial
 from time import sleep
+from struct import pack, unpack
 
 SAMPLING_TIME  = 16e-3 # both can be updated
 SCALING_FACTOR = 128   # by calling tinyPID.get_constants()
@@ -16,11 +17,29 @@ SCALING_FACTOR = 128   # by calling tinyPID.get_constants()
 
 # Utilities
 
-def to_word(msb, lsb):
-	return (msb << 8) + lsb
+uint16_t = '!H' # format strings understood by struct.pack/struct.unpack
+uint8_t  = '!B'
 
-def to_bytes(word):
-	return (word >> 8, word & 0xFF)
+def format(s, fmt):
+	"""
+	If 's' is a string, it’s assumed to be in 'fmt' 
+	and converted to an integer.
+	If 's' is an integer, it’s converted to a string
+	representing 'fmt'.
+
+	fmt may be uint8_t, uint16_t (see above definitions)
+	or any string understood by struct.pack/struct.unpack.
+	"""
+
+	if type(s) is str:
+		return unpack(fmt, s)[0]
+	elif type(s) is int:
+		return pack(fmt, s)
+	else:
+		return None
+
+uint8  = lambda s: format(s, uint8_t)
+uint16 = lambda s: format(s, uint16_t)
 
 
 # PID parameter conversions
@@ -194,7 +213,7 @@ class tinyPID (object):
 		""" Read byte(s) and return integer(s). """
 		s = self.__readc(count)
 		if s is not None:
-			b = map(ord, s)
+			b = map(uint8, s)
 			if len(b) == 1:
 				return b[0]
 			else:
@@ -207,9 +226,9 @@ class tinyPID (object):
 		""" Read byte pair(s) MSB, LSB and return integer(s). """
 		r = []
 		for i in range(0, count):
-			b = self.__readb(2)
+			b = self.__readc(2)
 			if b is not None and len(b) == 2:
-				r.append(to_word(b[0], b[1]))
+				r.append(uint16(b))
 		
 		if len(r) == 1:
 			return r[0]
@@ -227,12 +246,6 @@ class tinyPID (object):
 			if type(s) is int:
 				s = chr(s)
 			self.com.write(s)
-
-
-	def __writew(self, word):
-		""" Write a long number as MSB/LSB-pair. """
-		msb, lsb = to_bytes(word)
-		self.__write(msb, lsb)
 	
 	
 	def __display_value(self, *args):
@@ -323,8 +336,8 @@ class tinyPID (object):
 			return r[0]
 		else:
 			return r
-			
-			
+		
+		
 	def get_mode(self):
 		""" Get operation mode. """
 		self.__write("gm")
@@ -393,20 +406,17 @@ class tinyPID (object):
 	
 	def set_Kp(self, Kp):
 		""" Set proportional factor 'Kp'. """
-		self.__write("sp")
-		self.__writew(pfactor_scale(Kp))
+		self.__write("sp", uint16(pfactor_scale(Kp)))
 
 
 	def set_Ki(self, Ki):
 		""" Set integral factor 'Ki'. """
-		self.__write("si")
-		self.__writew(ifactor_scale(Ki))
+		self.__write("si", uint16(ifactor_scale(Ki)))
 
 
 	def set_Kd(self, Kd):
 		""" Set derivative factor 'Kd'. """
-		self.__write("sd")
-		self.__writew(dfactor_scale(Kd))
+		self.__write("sd", uint16(dfactor_scale(Kd)))
 
 
 	def set_setpoint(self, w):
@@ -429,8 +439,8 @@ class tinyPID (object):
 	def set_scale(self, xmin, xmax):
 		""" Set PV scale. """
 		xmin, xmax = self.__device_value(xmin, xmax)
-		self.__write("ss", xmin, xmax)
-		self.__writew(SCALING_FACTOR * 255/(xmax-xmin))
+		xscale = SCALING_FACTOR * 255/(xmax-xmin)
+		self.__write("ss", xmin, xmax, uint16(xscale))
 
 
 	def auto(self):
