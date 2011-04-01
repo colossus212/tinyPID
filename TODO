@@ -1,4 +1,5 @@
 FIRMWARE
+* add license, author, description to source files
 * cleanup code, documentation
 * pid.c bereinigen und struktur verfeinern (globale variablen etc.)
 * mit geringerer baudrate testen (fehler 128?)
