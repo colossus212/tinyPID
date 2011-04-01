@@ -1,7 +1,8 @@
-tinyPID 
-… is an implementation of a discrete PID controller on an AVR ATtiny45
-microcontroller.
+             tinyPID
 
-It’s fully functional, comes with some nice features, a Python
+tinyPID is an implementation of a discrete PID controller on AVR ATtiny45
+microcontrollers. It can be used for most closed loop controlling applications.
+
+It’s fully functional and configurable, comes with some nice features, a Python
 frontend module and a Qt GUI.
 
