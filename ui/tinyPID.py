@@ -11,6 +11,8 @@ import serial
 from time import sleep
 from struct import pack, unpack
 
+
+FULLSCALE = 255
 SAMPLING_TIME  = 16e-3 # both can be updated
 SCALING_FACTOR = 128   # by calling tinyPID.get_constants()
 
@@ -188,11 +190,11 @@ class tinyPID (object):
 			self.com.setTimeout(2)
 			
 		self.__valmin = 0
-		self.__valmax = 255
+		self.__valmax = FULLSCALE
 		self.__valunit = ''
 		
 		self.__outmin = 0
-		self.__outmax = 255
+		self.__outmax = FULLSCALE
 		self.__outunit = ''
 	
 	
@@ -254,10 +256,10 @@ class tinyPID (object):
 		See display_configuration() for more.
 		"""
 		r = []
-		factor = float(self.__valmax-self.__valmin)/255
+		factor = float(self.__valmax-self.__valmin)/FULLSCALE
 				
 		for a in args:
-			if a == 255:
+			if a == FULLSCALE:
 				r.append(self.__valmax)
 			elif a == 0:
 				r.append(self.__valmin)
@@ -276,10 +278,10 @@ class tinyPID (object):
 		See display_configuration() for more.
 		"""
 		r = []
-		factor = float(self.__outmax-self.__outmin)/255
+		factor = float(self.__outmax-self.__outmin)/FULLSCALE
 				
 		for a in args:
-			if a == 255:
+			if a == FULLSCALE:
 				r.append(self.__outmax)
 			elif a == 0:
 				r.append(self.__outmin)
@@ -298,11 +300,11 @@ class tinyPID (object):
 		See display_configuration() for more.
 		"""
 		r = []
-		factor = 255/float(self.__valmax-self.__valmin)
+		factor = FULLSCALE/float(self.__valmax-self.__valmin)
 				
 		for a in args:
 			if a >= self.__valmax:
-				r.append(255)
+				r.append(FULLSCALE)
 			elif a <= self.__valmin:
 				r.append(0)
 			else:
@@ -321,11 +323,11 @@ class tinyPID (object):
 		See display_configuration() for more.
 		"""
 		r = []
-		factor = 255/float(self.__outmax-self.__outmin)
+		factor = FULLSCALE/float(self.__outmax-self.__outmin)
 				
 		for a in args:
 			if a >= self.__outmax:
-				r.append(255)
+				r.append(FULLSCALE)
 			elif a <= self.__outmin:
 				r.append(0)
 			else:
@@ -439,7 +441,7 @@ class tinyPID (object):
 	def set_scale(self, xmin, xmax):
 		""" Set PV scale. """
 		xmin, xmax = self.__device_value(xmin, xmax)
-		xscale = SCALING_FACTOR * 255/(xmax-xmin)
+		xscale = SCALING_FACTOR * FULLSCALE/(xmax-xmin)
 		self.__write("ss", xmin, xmax, uint16(xscale))
 
 
@@ -468,19 +470,17 @@ class tinyPID (object):
 		e = w - x
 		m = self.opmode
 		
-		print "Kp: %2.2f \nKi: %2.2f (Tn: %2.2f) \nKd: %2.2f (Tv: %2.2f)" % (p, i, n, d, v)
+		datafmt = {'w': w, 'x': x, 'e': e, 'unit': self.__valunit, 'min': xmin, 'max': xmax}
+		parafmt = {'p': p, 'i': i, 'd': d, 'v': v, 'n': n}
+		outfmt  = {'y': y, 'unit': self.__outunit, 'min': ymin, 'max': ymax}
 		
-		if self.__valmin == 0 and self.__valmax == 255:
-			print "w: %i%s \nx: %i%s (%i..%i%s) \ne: %i%s" \
-			      % (w, self.__valunit, x, self.__valunit, xmin, xmax, self.__valunit, e, self.__valunit)
-		else:
-			print "w: %.2f%s \nx: %.2f%s (%.2f..%.2f%s) \ne: %.2f%s" \
-			      % (w, self.__valunit, x, self.__valunit, xmin, xmax, self.__valunit, e, self.__valunit)
-			
-		if self.__outmin == 0 and self.__outmax == 255:
-			print "y: %i%s (%i..%i%s)" % (y, self.__outunit, ymin, ymax, self.__outunit)
-		else:
-			print "y: %.2f%s (%.2f..%.2f%s)" % (y, self.__outunit, ymin, ymax, self.__outunit)
+		datastr = "w: {w}{unit} \nx: {x}{unit} ({min}..{max}{unit}) \ne: {e}{unit}"
+		outstr = "y: {y}{unit} ({min}..{max}{unit})"
+		parastr = "Kp: {p:.2f} \nKi: {i:.2f} (Tn: {n:.2f}) \nKd: {d:.2f} (Tv: {v:.2f})"
+		
+		print parastr.format(**parafmt)
+		print datastr.format(**datafmt)
+		print outstr.format(**outfmt)
 		
 		print m == 'a' and "automatic" or "manual"
 
@@ -492,20 +492,8 @@ class tinyPID (object):
 				w, x, y = self.w, self.x, self.y
 				e = w - x
 				
-				string = ''
-				
-				if self.__valmin == 0 and self.__valmax == 255:
-					string = "w: %i%s x: %i%s e: %i%s "
-				else:
-					string = "w: %.2f%s x: %.2f%s e: %.2f%s "
-		
-				if self.__outmin == 0 and self.__outmax == 255:
-					string += ("y: %i%s")
-				else:
-					string += ("y: %.2f%s")
-					
-					
-				print string % (w, self.__valunit, x, self.__valunit, e, self.__valunit, y, self.__outunit)
+				string = "w: {w}{unit} x: {x}{unit} e: {e}{unit} y: {y}{outunit}"
+				print string.format(w=w, x=x, e=e, y=y, unit=self.__valunit, outunit=self.__outunit)
 				
 				sleep(interval)
 		except KeyboardInterrupt:
@@ -549,11 +537,11 @@ class tinyPID (object):
 		Reset display configuration to display fullscale values (0…255).
 		"""
 		self.__valmin = 0
-		self.__valmax = 255
+		self.__valmax = FULLSCALE
 		self.__valunit = ''
 		
 		self.__outmin = 0
-		self.__outmax = 255
+		self.__outmax = FULLSCALE
 		self.__outunit = ''
 	
 	
