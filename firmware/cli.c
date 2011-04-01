@@ -39,11 +39,8 @@
  */
 
 
-#include <avr/pgmspace.h>
-#include <avr/interrupt.h>
+
 #include "cli.h"
-#include "softuart.h"
-#include "pid.h"
 
 extern piddata_t piddata;
 

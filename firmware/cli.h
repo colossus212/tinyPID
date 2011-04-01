@@ -1,7 +1,8 @@
-#ifndef __CLI_H__
-#define __CLI_H__
+#include <avr/pgmspace.h>
+#include <avr/interrupt.h>
+#include "softuart.h"
+#include "pid.h"
 
 void init_cli();
-void command_loop();
 
-#endif
+void command_loop();

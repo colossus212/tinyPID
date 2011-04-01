@@ -1,6 +1,3 @@
-#include <avr/io.h>
-#include <avr/interrupt.h>
-#include <avr/eeprom.h>
 #include "pid.h"
 
 volatile uint8_t sampleflag = 0;

@@ -1,7 +1,6 @@
-#ifndef __PID_H__
-#define __PID_H__
-
 #include <avr/io.h>
+#include <avr/interrupt.h>
+#include <avr/eeprom.h>
 
 // Peripherals
 #define IO_PWM PB4
@@ -56,5 +55,3 @@ void pid_auto();
 
 void pid_save_parameters();
 void pid_load_parameters();
-
-#endif
