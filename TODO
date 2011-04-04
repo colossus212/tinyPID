@@ -1,5 +1,6 @@
 FIRMWARE
 * s/scale_pv/pid_scale_pv/g 
+* s/LSB,MSB/Lo, Hi/g
 * add license, author, description to source files
 * cleanup code, documentation
 * pid.c bereinigen und struktur verfeinern (globale variablen etc.)
