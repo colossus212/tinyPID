@@ -10,7 +10,7 @@ It is fully functional and configurable, comes with some nice features, a Python
 frontend module and a Qt GUI. With each of the frontends you can configure the 
 controller’s parameters, view process variables such as output, process value, 
 setpoint and error, configure a scale conversion, set the setpoint or limit the 
-output e.g.
+output, set the output manually etc.
 
 ![tinyPID scheme][1]
 
