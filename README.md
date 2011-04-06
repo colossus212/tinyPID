@@ -10,5 +10,5 @@ frontend module and a Qt GUI.
 ![tinyPID scheme][1]
 
 
-[1]: https://github.com/modul/tinyPID/raw/master/doc/schema.svg
+[1]: https://github.com/modul/tinyPID/raw/master/doc/schema.png
 
