@@ -7,8 +7,8 @@ microcontrollers. It can be used for most closed loop controlling applications.
 It’s fully functional and configurable, comes with some nice features, a Python
 frontend module and a Qt GUI.
 
-![tinyPID scheme][schema.png]
+![tinyPID scheme][1]
 
 
-[schema.png]: https://github.com/modul/tinyPID/raw/master/doc/schema.svg
+[1]: https://github.com/modul/tinyPID/raw/master/doc/schema.svg
 
