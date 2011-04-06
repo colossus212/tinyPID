@@ -15,9 +15,9 @@ output, set the output manually etc.
 ![tinyPID scheme][1]
 
 
-At minimum the hardware consists of one ATtiny45, a power supply and some wires
-to connect to the process. Communication can be done with an external 
-UART to USB/Serial adapter.
+At minimum the hardware consists of one ATtiny45, a power supply, a pull-down resistor
+for the ADC input and some wires to connect to the process. 
+Communication can be done with an external UART to USB/Serial adapter.
 
 [1]: https://github.com/modul/tinyPID/raw/master/doc/schema.png
 
