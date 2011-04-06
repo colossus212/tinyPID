@@ -16,8 +16,8 @@
    inkscape:version="0.47 r22583"
    sodipodi:docname="schema.svg"
    inkscape:export-filename="/home/mo/engineering/projects/tinyPID/doc/schema.png"
-   inkscape:export-xdpi="117.21"
-   inkscape:export-ydpi="117.21">
+   inkscape:export-xdpi="117.20905"
+   inkscape:export-ydpi="117.20905">
   <defs
      id="defs4">
     <marker
@@ -108,9 +108,9 @@
      borderopacity="1.0"
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
-     inkscape:zoom="1.979899"
-     inkscape:cx="390.16262"
-     inkscape:cy="860.58771"
+     inkscape:zoom="0.9899495"
+     inkscape:cx="377.78335"
+     inkscape:cy="848.68177"
      inkscape:document-units="px"
      inkscape:current-layer="layer1"
      showgrid="false"
@@ -118,7 +118,9 @@
      inkscape:window-height="718"
      inkscape:window-x="-1"
      inkscape:window-y="0"
-     inkscape:window-maximized="1" />
+     inkscape:window-maximized="1"
+     showguides="true"
+     inkscape:guide-bbox="true" />
   <metadata
      id="metadata7">
     <rdf:RDF>
@@ -177,7 +179,7 @@
        d="M 371.23242,127.99989 230.87528,127.64274"
        id="path5322" />
     <g
-       id="g7021">
+       id="g2946">
       <flowRoot
          transform="translate(19.089568,-341.86229)"
          style="font-size:12px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:center;line-height:100%;writing-mode:lr-tb;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none;font-family:Droid Sans;-inkscape-font-specification:Droid Sans"
@@ -266,7 +268,7 @@
              height="102.71348"
              width="75.913078"
              id="rect2816"
-             style="fill:#ffffff;stroke:#000000;stroke-width:1.93287169999999997;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;stroke-dashoffset:0;fill-opacity:1" />
+             style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:1.9328717;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;stroke-dashoffset:0" />
           <flowRoot
              transform="matrix(1,0,0,0.98653077,53.875283,-350.215)"
              style="font-size:9px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:center;line-height:100%;writing-mode:lr-tb;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none;font-family:Droid Sans;-inkscape-font-specification:Droid Sans"
@@ -314,7 +316,7 @@
                id="flowPara6664">ATtiny45</flowPara></flowRoot>        </g>
       </g>
       <flowRoot
-         transform="translate(3.428571,-58.571429)"
+         transform="translate(-0.571429,-54.571429)"
          style="font-size:12px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:center;line-height:100%;writing-mode:lr-tb;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none;font-family:Droid Sans;-inkscape-font-specification:Droid Sans"
          id="flowRoot6666"
          xml:space="preserve"><flowRegion
