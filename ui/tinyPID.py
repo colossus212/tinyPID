@@ -3,8 +3,16 @@
 #
 # Frontend to tinyPID.
 #
-# author: Remo Giermann (mo@liberejo.de)
-# created: 2011/03/03
+# ----------------------------------------------------------------------------
+# "THE BEER-WARE LICENSE" (Revision 42):
+# <mo@liberejo.de> wrote this file. As long as you retain this notice you
+# can do whatever you want with this stuff. If we meet some day, and you think
+# this stuff is worth it, you can buy me a beer in return - Remo Giermann.
+# ----------------------------------------------------------------------------
+# 
+# author:   Remo Giermann (mo@liberejo.de)
+# created:  2011/03/03
+# homepage: http://github.com/modul/tinyPID
 #
 
 import serial
@@ -197,10 +205,8 @@ class tinyPID (object):
 		self.__outmax = FULLSCALE
 		self.__outunit = ''
 	
-	
 	def __del__(self):
 		del self.com
-
 
 	def __readc(self, count=1):
 		""" Read and return character(s). """
@@ -209,7 +215,6 @@ class tinyPID (object):
 			return None
 		else:
 			return s	
-	
 	
 	def __readb(self, count=1):
 		""" Read byte(s) and return integer(s). """
@@ -222,8 +227,7 @@ class tinyPID (object):
 				return b
 		else:
 			return None
-	
-	
+
 	def __readw(self, count=1):
 		""" Read byte pair(s) MSB, LSB and return integer(s). """
 		r = []
@@ -239,7 +243,6 @@ class tinyPID (object):
 		else:
 			return r
 
-
 	def __write(self, *args):
 		""" Write characters/bytes. """
 		for s in args:
@@ -248,7 +251,6 @@ class tinyPID (object):
 			if type(s) is int:
 				s = chr(s)
 			self.com.write(s)
-	
 	
 	def __display_value(self, *args):
 		""" 
@@ -271,7 +273,6 @@ class tinyPID (object):
 		else:
 			return r
 	
-	
 	def __display_output(self, *args):
 		""" 
 		Convert each arg to the configured output scale. 
@@ -292,7 +293,6 @@ class tinyPID (object):
 			return r[0]
 		else:
 			return r
-	
 	
 	def __device_value(self, *args):
 		"""
@@ -316,7 +316,6 @@ class tinyPID (object):
 		else:
 			return r
 		
-
 	def __device_output(self, *args):
 		"""
 		Convert each arg back to the fullscale used on the device.
@@ -339,30 +338,25 @@ class tinyPID (object):
 		else:
 			return r
 		
-		
 	def get_mode(self):
 		""" Get operation mode. """
 		self.__write("gm")
 		return self.__readc()
-
 
 	def get_Kp(self):
 		""" Get proportional factor. """
 		self.__write("gp")
 		return pfactor_unscale(self.__readw())
 
-
 	def get_Ki(self):
 		""" Get integral factor. """
 		self.__write("gi")
 		return ifactor_unscale(self.__readw())
 
-
 	def get_Kd(self):
 		""" Get derivative factor. """
 		self.__write("gd")
 		return dfactor_unscale(self.__readw())
-
 
 	def get_pv(self):
 		""" Get process value 'x'. """
@@ -370,13 +364,11 @@ class tinyPID (object):
 		x = self.__readb()
 		return self.__display_value(x)
 
-
 	def get_setpoint(self):
 		""" Get setpoint 'w'. """
 		self.__write("gv")
 		w = self.__readb()
 		return self.__display_value(w)
-
 
 	def get_output(self):
 		""" Get output value 'y'. """
@@ -384,13 +376,11 @@ class tinyPID (object):
 		y = self.__readb()
 		return self.__display_output(y)
 
-
 	def get_limits(self):
 		""" Get output limits. """
 		self.__write("gl")
 		limits = self.__readb(2)
 		return self.__display_output(*limits)
-
 
 	def get_scale(self):
 		""" Get PV scale. """
@@ -399,44 +389,36 @@ class tinyPID (object):
 		xscale = self.__readw()
 		return self.__display_value(xmin, xmax)
 
-
 	def get_constants(self):
 		""" Get calculation constants sampling time and scaling factor. """
 		self.__write("gc")
 		return self.__readb(2)
 
-	
 	def set_Kp(self, Kp):
 		""" Set proportional factor 'Kp'. """
 		self.__write("sp", uint16(pfactor_scale(Kp)))
-
 
 	def set_Ki(self, Ki):
 		""" Set integral factor 'Ki'. """
 		self.__write("si", uint16(ifactor_scale(Ki)))
 
-
 	def set_Kd(self, Kd):
 		""" Set derivative factor 'Kd'. """
 		self.__write("sd", uint16(dfactor_scale(Kd)))
-
 
 	def set_setpoint(self, w):
 		""" Set setpoint 'w'. """
 		w = self.__device_value(w)
 		self.__write("sv", w)
 
-
 	def set_output(self, y):
 		""" Set output value 'y' manually. """
 		self.__write("sy", self.__device_output(y))
-
 
 	def set_limits(self, ymin, ymax):
 		""" Set output limits. """
 		ymin, ymax = self.__device_output(ymin, ymax)
 		self.__write("sl", ymin, ymax)
-
 
 	def set_scale(self, xmin, xmax):
 		""" Set PV scale. """
@@ -444,21 +426,17 @@ class tinyPID (object):
 		xscale = SCALING_FACTOR * FULLSCALE/(xmax-xmin)
 		self.__write("ss", xmin, xmax, uint16(xscale))
 
-
 	def auto(self):
 		""" Set to automatic mode. """
 		self.__write("a")
-
 
 	def manual(self):
 		""" Set to manual mode. """
 		self.__write("m")
 
-
 	def save(self):
 		""" Save device configuration to EEPROM. """
 		self.__write("e")
-
 
 	def info(self):
 		""" Print PID data. """
@@ -484,7 +462,6 @@ class tinyPID (object):
 		
 		print m == 'a' and "automatic" or "manual"
 
-
 	def log(self, interval=1):
 		""" Print out w, x, y, e continuously in an interval of 'interval'. """
 		try:
@@ -499,11 +476,9 @@ class tinyPID (object):
 		except KeyboardInterrupt:
 			return
 	
-	
 	def flush(self):
 		""" Flush the serial input buffer. """
 		self.com.readlines()
-	
 	
 	def display_configuration(self, vmin, vmax, vunit='', omin=0, omax=100, ounit='%'):
 		"""
@@ -531,7 +506,6 @@ class tinyPID (object):
 		self.__outmax = omax
 		self.__outunit = ounit
 		
-		
 	def reset_display(self):
 		"""
 		Reset display configuration to display fullscale values (0…255).
@@ -544,7 +518,6 @@ class tinyPID (object):
 		self.__outmax = FULLSCALE
 		self.__outunit = ''
 	
-	
 	def percentage(self, enable=True):
 		"""
 		Display all values in percent or reset to 0…255.
@@ -554,7 +527,6 @@ class tinyPID (object):
 		else:
 			self.reset_display()
 			
-		
 	def __getattr__(self, name):
 		if name == "Kp":
 			return self.get_Kp()

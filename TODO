@@ -1,19 +1,16 @@
 FIRMWARE
-* s/scale_pv/pid_scale_pv/g 
-* s/LSB,MSB/Lo, Hi/g
-* add license, author, description to source files
-* cleanup code, documentation
-* pid.c bereinigen und struktur verfeinern (globale variablen etc.)
 * mit geringerer baudrate testen (fehler 128?)
 
 UI
+* tinyPIDcommands macht lowlevel commands
+  tinyPID (frontend) macht user interaction 
+  (implementiert getattr, setattr und mapt zu tinyPID.set_, 
+  implementiert vllt scaling etc)
 * GUI: merge tinyPIDmonitor with tinyPIDqt!
-* GUI: anzeigeskala: alle werte in Bereich/Einheit umrechnen und darstellen,
-   user input: einheit, min, max
-   default: prozent
 * serial timeout verringern
 * GUI: weg mit connectPIDSignals, dafür slots für diese, dort wird self.pid überprüft
-* disconnect überprüfen? user-disconnect?
+* disconnect überprüfen? user-disconnect? 
+  - connection manager, read retry, expected response… - if not: disconnected
 * simple gui „Regler“? nur setpoint/output und monitoring?
 
 IDEEN
