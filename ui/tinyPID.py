@@ -106,27 +106,6 @@ class tinyPID (object):
 	"""
 	Frontend to tinyPID.
 	
-	To understand the parameters, the controller uses a derived form of 
-	the following discrete controller equation:
-	
-	y = Kp * e + Ki * SAMPLING_TIME * esum + Kd/SAMPLING_TIME * de
-	
-	which is equivalent to
-	
-	y = Kp * e + 1/Tn * SAMPLING_TIME * esum + Tv/SAMPLING_TIME * de
-	
-	y is the output value, e is the error (setpoint - process value), 
-	esum is the sum of errors in the past, de is the difference of the current
-	and last error.
-	Kp, Ki, and Kd as well as Tn and Tv are the controller parameters. 
-	Tn = Kp/Ki, Tv = Kd/Kp
-	
-	Instead of sending these parameters directly to the controller, they are 
-	scaled with a factor and multiplied with the sampling time as needed. This
-	is hidden from the user by the frontend. There may be some rounding errors 
-	though.
-	
-	
 	Methods:
 	--------
 	auto():          set controller to automatic mode
