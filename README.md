@@ -14,10 +14,20 @@ output, set the output manually etc.
 
 ![tinyPID scheme][1]
 
-
 At minimum the hardware consists of one ATtiny45, a power supply, a pull-down resistor
 for the ADC input and some wires to connect it to the process. 
 Communication can be done with an external UART to USB/Serial adapter.
+
+The source and description of tinyPID lives at http://github.com/modul/tinyPID.
+
+License
+----------------------------------------------------------------------------
+"THE BEER-WARE LICENSE" (Revision 42):
+
+<mo@liberejo.de> wrote this file. As long as you retain this notice you
+can do whatever you want with this stuff. If we meet some day, and you think
+this stuff is worth it, you can buy me a beer in return - Remo Giermann.
+
 
 [1]: https://github.com/modul/tinyPID/raw/master/doc/schema.png
 

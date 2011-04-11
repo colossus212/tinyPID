@@ -1,3 +1,21 @@
+/*
+ * PID.c
+ *
+ * The PID controller algorithm and utility functions for tinyPID. 
+ * 
+ * ----------------------------------------------------------------------------
+ * "THE BEER-WARE LICENSE" (Revision 42):
+ * <mo@liberejo.de> wrote this file. As long as you retain this notice you
+ * can do whatever you want with this stuff. If we meet some day, and you think
+ * this stuff is worth it, you can buy me a beer in return - Remo Giermann.
+ * ----------------------------------------------------------------------------
+ *
+ * author:   Remo Giermann (mo@liberejo.de)
+ * created:  2010/03/01
+ * homepage: http://github.com/modul/tinyPID 
+ * 
+ */
+
 #include "pid.h"
 
 volatile uint8_t sampleflag = 0;
@@ -213,11 +231,11 @@ uint8_t pid_read_pv()
 	a = a >> 2; // devide by 4 to get mean
 	a = a >> 2; // get 8bit result
 	
-    return scale_pv((uint8_t) a);
+    return pid_scale_pv((uint8_t) a);
 }
 
 /* Scale the process value according to pvmin, pvmax and pvscale settings. */
-uint8_t scale_pv(uint8_t adc)
+uint8_t pid_scale_pv(uint8_t adc)
 {
 	uint32_t pv = 0;
 	
